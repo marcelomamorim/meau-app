@@ -13,8 +13,10 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import {ImagePickerSuccessResult} from "expo-image-picker";
 import {MaterialIcons} from "@expo/vector-icons";
+import * as Font from "expo-font";
 
 const RegistrationScreen = () => {
+
     const [formData, setFormData] = useState({
         nomeCompleto: '',
         idade: '',
@@ -125,6 +127,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 30,
+        color: '#cfe9e5'
     },
     input: {
         height: 40,

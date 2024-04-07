@@ -5,23 +5,6 @@ import * as Font from 'expo-font';
 
 const OnboardingScreen = () => {
 
-    const [fontLoaded, setFontLoaded] = useState(false);
-
-    useEffect(() => {
-        const loadFonts = async () => {
-            await Font.loadAsync({
-                'Courgette-Regular': require('../assets/fonts/Courgette-Regular.ttf'),
-            });
-            setFontLoaded(true);
-        };
-
-        loadFonts().then(r => console.log('Fontes carregadas'));
-    }, []);
-
-    if (!fontLoaded) {
-        return <View><Text>Loading...</Text></View>;
-    }
-
     const handleRegister = () => {
         router.navigate('register');
     };
@@ -70,11 +53,13 @@ const styles = StyleSheet.create({
         marginLeft: '10%',
         marginRight: '10%',
         color: '#757575',
+        fontFamily: 'Roboto'
     },
     question: {
         fontSize: 14,
         color: '#757575',
         marginVertical: 20,
+        fontFamily: 'Roboto'
     },
     button: {
         paddingHorizontal: 30,
@@ -93,9 +78,9 @@ const styles = StyleSheet.create({
         width: '85%'
     },
     buttonText: {
-        fontSize: 16,
-        color: '#fff',
-        fontWeight: 'bold',
+        fontSize: 14,
+        color: '#434343',
+        fontFamily: 'Roboto'
     },
 });
 

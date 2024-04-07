@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import {router} from "expo-router";
 import BackButton from "@/components/shared/BackButton";
@@ -38,16 +38,17 @@ const styles = StyleSheet.create({
     title: {
         flex: 1,
         textAlign: 'center',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginLeft: '-15%'
+        fontSize: 24,
+        marginLeft: '-35%',
+        fontFamily: 'Roboto',
+        color: '#434343'
     },
     placeholder: {
-        width: 10,
+        width: 15,
     },
     backIcon: {
-        width: 20,
-        height: 20,
+        width: 15,
+        height: 15,
     },
 });
 
