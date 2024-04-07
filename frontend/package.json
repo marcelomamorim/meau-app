@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "build:ios": "expo build:ios --non-interactive",
     "build:android": "expo build:android --non-interactive",
-    "test": "jest --watchAll",
+    "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
