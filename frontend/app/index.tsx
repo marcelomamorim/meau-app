@@ -1,14 +1,14 @@
-import { View } from '@/components/Themed';
-import AuthenticationScreen from '@/components/AuthenticationScreen';
-import HeaderComponent from '@/components/HeaderComponent';
+import React from 'react';
+import SplashScreen from "@/components/SplashScreen";
 
-export default function Main() {
-  return (
-    <View>
-      <HeaderComponent title={'Meau App'} onButtonPress={function (): void {
-        throw new Error('Function not implemented.');
-      } }></HeaderComponent>
-      <AuthenticationScreen></AuthenticationScreen>
-    </View>
-  );
-}
+const App = () => {
+    return (
+        <SplashScreen>
+        </SplashScreen>
+    );
+};
+
+export default App;
+
+
+

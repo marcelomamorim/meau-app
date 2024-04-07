@@ -1,94 +1,133 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, ScrollView, Text, AccessibilityInfo, findNodeHandle, Platform } from 'react-native';
-import { Button, TextInput } from 'react-native-paper';
+import React, {useState, useRef, useEffect} from 'react';
+import {View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform} from 'react-native';
+import { TextInput, Button } from 'react-native-paper';
 
-const { width, height } = Dimensions.get('window');
+const TelaDeAutenticacao: React.FC = () => {
 
-const AuthScreen: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [isEmailValid, setIsEmailValid] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const emailRef = React.useRef(null);
-  const passwordRef = React.useRef(null);
+  const refInputEmail = useRef(null);
+  const refInputSenha = useRef(null);
+
+  useEffect(() => {
+    setIsEmailValid(email.length === 0 || validateEmail(email)); // Email is considered valid if it's empty or matches the regex
+  }, [email]);
 
   const handleLogin = () => {
-    console.log('Login with:', email, password);
+    setLoginAttempted(true); // Marca que uma tentativa de login foi feita
+    const emailIsValid = validateEmail(email);
+    setIsEmailValid(emailIsValid);
+
+    if (!emailIsValid) {
+      console.log('O formato do email não é válido.');
+      return;
+    }
+    console.log('Entrar com:', email, senha);
   };
 
-  const handleGoogleLogin = () => {
-    console.log('Login with Google');
-  };
+  const handleLoginGoogle = () => console.log('Entrar com Google');
+  const handleLoginFacebook = () => console.log('Entrar com Facebook');
 
-  const handleFacebookLogin = () => {
-    console.log('Login with Facebook');
+  const validateEmail = (email: string) => {
+    const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
+    return re.test(email);
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-      <View style={styles.container}>
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          ref={emailRef}
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="email-address"
-          textContentType="emailAddress" // iOS only
-          accessible={true}
-          accessibilityLabel="Email Address Field"
-        />
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          ref={passwordRef}
-          label="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          mode="outlined"
-          style={styles.input}
-          textContentType="password" // iOS only
-          accessible={true}
-          accessibilityLabel="Password Field"
-        />
-        <Button mode="contained" onPress={handleLogin} style={styles.button} accessibilityLabel="Log in">
-          Entrar
-        </Button>
-        <Button icon="google" mode="outlined" onPress={handleGoogleLogin} style={styles.button} accessibilityLabel="Log in with Google">
-          Login with Google
-        </Button>
-        <Button icon="facebook" mode="outlined" onPress={handleFacebookLogin} style={styles.button} accessibilityLabel="Log in with Facebook">
-          Login with Facebook
-        </Button>
-      </View>
-    </ScrollView>
+      <SafeAreaView style={styles.safeAreaView}>
+        <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <ScrollView contentContainerStyle={styles.scrollViewContainer} keyboardShouldPersistTaps="handled">
+            <View style={styles.containerFormulario}>
+              {!isEmailValid && loginAttempted && (
+                  <Text style={styles.validationMessage}>
+                    O formato do email não é válido.
+                  </Text>
+              )}
+              <TextInput
+                  ref={refInputEmail}
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  mode="outlined"
+                  style={styles.input}
+                  inputMode="email"
+                  readOnly={false}
+                  aria-label="Campo de entrada de email"
+              />
+              <TextInput
+                  ref={refInputSenha}
+                  label="Senha"
+                  value={senha}
+                  onChangeText={setSenha}
+                  secureTextEntry
+                  mode="outlined"
+                  style={styles.input}
+                  inputMode="text"
+                  readOnly={false}
+                  aria-label="Campo de entrada de senha"
+              />
+            </View>
+            <View style={styles.containerBotoes}>
+              <Button mode="contained" onPress={handleLogin} style={styles.button} aria-label="Botão de entrar">
+                Entrar
+              </Button>
+              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.button} aria-label="Botão de entrar com Google">
+                Entrar com Google
+              </Button>
+              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.button} aria-label="Botão de entrar com Facebook">
+                Entrar com Facebook
+              </Button>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeAreaView: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
   scrollViewContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: width * 0.05,
+    justifyContent: 'space-between',
   },
-  container: {
-    width: '100%', // Ensure the container takes up the full width of the scrollViewContainer
-    alignItems: 'center', // Center children horizontally
+  containerFormulario: {
+    paddingTop: '30%',
+    paddingBottom: '25%',
+    marginLeft: '10%',
+    marginRight: '10%',
+  },
+  containerBotoes: {
+    paddingBottom: 40,
+    marginLeft: '10%',
+    marginRight: '10%',
   },
   input: {
-    width: '95%', // Increased width for more prominence
+    width: '95%',
+    alignSelf: 'center',
     marginBottom: 20,
   },
   button: {
-    width: '95%', // Increased width for more prominence
-    marginBottom: 20,
+    width: '95%',
+    alignSelf: 'center',
+    marginBottom: '7%',
   },
   label: {
-    alignSelf: 'center', // Ensure labels are also centered
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  validationMessage: {
+    alignSelf: 'center',
+    color: 'red', // Feel free to adjust the color
     marginBottom: 10,
   },
 });
 
-export default AuthScreen;
+export default TelaDeAutenticacao;

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "frontend",
+    "name": "meau-app",
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -26,14 +26,12 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static"
     },
     "plugins": [
       "expo-router"
     ],
     "experiments": {
-      "typedRoutes": true
     }
   }
 }
