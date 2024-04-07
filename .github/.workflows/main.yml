@@ -1,7 +1,6 @@
 name: Expo CI
 
 on:
-on:
   push:
     branches:
       - main
