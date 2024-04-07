@@ -1,16 +1,16 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import {router} from "expo-router";
-import BackButton from "@/components/shared/BackButton";
+import BackButtonComponent from "@/components/BackButtonComponent";
 
-// @ts-ignore
+// @ts-expect-error: resolving types
 const HeaderComponent = ({ title, leftSideButton }) => {
 
     return (
         <View style={styles.container}>
-            <BackButton onPress={() => {
+            <BackButtonComponent onPress={() => {
                 router.navigate(leftSideButton);
-            }}></BackButton>
+            }}></BackButtonComponent>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.placeholder} />
         </View>

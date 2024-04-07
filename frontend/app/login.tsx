@@ -1,6 +1,6 @@
 import React from 'react';
 
-import AuthenticationScreen from "@/components/AuthenticationScreen";
+import AuthenticationScreen from "@/screens/Authentication/AuthenticationScreen";
 import HeaderComponent from "@/components/HeaderComponent";
 
 const Login = () => {

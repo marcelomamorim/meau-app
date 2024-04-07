@@ -1,7 +1,6 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import {router} from "expo-router";
-import * as Font from 'expo-font';
 
 const OnboardingScreen = () => {
 

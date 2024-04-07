@@ -1,7 +1,7 @@
 import React from 'react';
 
 import HeaderComponent from "@/components/HeaderComponent";
-import RegisterScreen from "@/components/RegisterScreen";
+import RegisterScreen from "@/screens/Register/RegisterScreen";
 
 const Login = () => {
     return (

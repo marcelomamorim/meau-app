@@ -1,0 +1,39 @@
+name: Expo CI
+
+on:
+on:
+  push:
+    branches:
+      - main
+      - feature/**
+  pull_request:
+    branches:
+      - main
+      - feature/**
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./frontend
+
+      - name: Run TypeScript Compiler
+        run: npx tsc --noEmit
+        working-directory: ./frontend
+
+      - name: Run tests
+        run: npm test
+        working-directory: ./frontend

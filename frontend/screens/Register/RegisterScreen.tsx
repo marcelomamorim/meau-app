@@ -13,7 +13,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import {ImagePickerSuccessResult} from "expo-image-picker";
 import {MaterialIcons} from "@expo/vector-icons";
-import * as Font from "expo-font";
+
 
 const RegistrationScreen = () => {
 
@@ -33,7 +33,7 @@ const RegistrationScreen = () => {
     const [image, setImage] = useState(null);
 
     useEffect(() => {
-        requestMediaLibraryPermissions().then(r => {
+        requestMediaLibraryPermissions().then( () => {
             console.log('Permissao solicitada!')
         });
     }, []);
@@ -48,16 +48,16 @@ const RegistrationScreen = () => {
     };
 
     const pickImage = async () => {
-        let result = await ImagePicker.launchImageLibraryAsync({
+        const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [1, 1],
             quality: 1,
         });
 
-        // @ts-ignore
+        // @ts-expect-error: resolving types
         if (result as ImagePickerSuccessResult && result.assets?.length > 0) {
-            // @ts-ignore
+            // @ts-expect-error: resolving types
             setImage(result.assets?.at(0).uri);
         }
     };

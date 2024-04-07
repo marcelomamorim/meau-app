@@ -1,6 +1,6 @@
 import React from 'react';
 
-import OnboardingScreen from "@/components/OnboardingScreen";
+import OnboardingScreen from "@/screens/Onboard/OnboardingScreen";
 import HeaderComponent from "@/components/HeaderComponent";
 
 const Onboard = () => {

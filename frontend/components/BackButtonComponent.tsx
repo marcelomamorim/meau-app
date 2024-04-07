@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
-// @ts-ignore
-const BackButton = ({ onPress }) => {
+// @ts-expect-error: resolving types
+const BackButtonComponent = ({ onPress }) => {
     return (
         <View style={styles.container}>
             <TouchableOpacity onPress={onPress} style={styles.touchable} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
@@ -30,4 +30,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default BackButton;
+export default BackButtonComponent;
