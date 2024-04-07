@@ -6,7 +6,6 @@ on:
       - main
       - feature/**
   pull_request:
-    types: [opened, reopened, review_requested, edited]
     branches:
       - main
       - feature/**
