@@ -1,15 +1,17 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Image } from 'react-native';
 import {router} from "expo-router";
+import BackButton from "@/components/shared/BackButton";
 
 // @ts-ignore
-const HeaderComponent = ({ title, leftSideButton }) => {// If using React Navigation
+const HeaderComponent = ({ title, leftSideButton }) => {
 
     return (
         <View style={styles.container}>
-            <TouchableOpacity onPress={() => router.navigate(leftSideButton)} style={styles.backButton}>
-                <Text style={styles.backButtonText}>Voltar</Text>
-            </TouchableOpacity>
+            <BackButton onPress={() => {
+                console.log('Back button clicked for screen ' + leftSideButton)
+                router.navigate(leftSideButton);
+            }}></BackButton>
             <Text style={styles.title}>{title}</Text>
             <View style={styles.placeholder} />
         </View>
@@ -21,26 +23,32 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingTop: Platform.OS === 'ios' ? 60 : 20, // Adjust for status bar height
+        paddingTop: 20,
         paddingBottom: 10,
         paddingHorizontal: 10,
-        backgroundColor: '#f8f8f8', // Customize your header background color
+        backgroundColor: '#88c9bf',
+        borderRadius: 5
     },
     backButton: {
-        padding: 10, // Makes it easier to tap
+        padding: 15,
     },
     backButtonText: {
-        fontSize: 16, // Customize as needed
-        color: '#007bff', // Customize your back button text color
+        fontSize: 16,
+        color: '#007bff',
     },
     title: {
-        flex: 1, // Takes up the maximum available space
-        textAlign: 'center', // Ensures the text is centered
-        fontSize: 18, // Customize as needed
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 18,
         fontWeight: 'bold',
+        marginLeft: '-15%'
     },
     placeholder: {
-        width: 10, // Maintains the flex layout, adjust as needed
+        width: 10,
+    },
+    backIcon: {
+        width: 20,
+        height: 20,
     },
 });
 

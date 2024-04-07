@@ -4,6 +4,7 @@ import {router} from "expo-router";
 
 const OnboardingScreen = () => {
     const handleRegister = () => {
+        router.navigate('register');
         console.log('Navigating to Registration Screen...');
     };
 
@@ -21,7 +22,7 @@ const OnboardingScreen = () => {
                 <Text style={styles.buttonText}>Fazer Cadastro</Text>
             </TouchableOpacity>
 
-            <Text style={styles.question}>Já possui Cadastro?</Text>
+            <Text style={styles.question}>Já possui cadastro?</Text>
 
             <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={handleLogin}>
                 <Text style={styles.buttonText}>Fazer Login</Text>
@@ -39,20 +40,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     title: {
-        fontSize: 28,
+        fontSize: 53,
         fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 20,
+        color: '#88c9bf',
+        marginBottom: '30%'
     },
     message: {
-        fontSize: 18,
+        fontSize: 14,
         textAlign: 'center',
-        marginBottom: 40,
-        color: '#666',
+        marginBottom: 20,
+        color: '#757575',
     },
     question: {
-        fontSize: 16,
-        color: '#777',
+        fontSize: 14,
+        color: '#757575',
         marginVertical: 20,
     },
     button: {
@@ -64,13 +65,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     registerButton: {
-        backgroundColor: '#4CAF50', // Green
+        backgroundColor: '#88c9bf',
+        width: '85%'
     },
     loginButton: {
-        backgroundColor: '#2196F3', // Blue
+        backgroundColor: '#88c9bf',
+        width: '85%'
     },
     buttonText: {
-        fontSize: 18,
+        fontSize: 16,
         color: '#fff',
         fontWeight: 'bold',
     },

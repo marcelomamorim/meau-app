@@ -13,11 +13,13 @@ const TelaDeAutenticacao: React.FC = () => {
   const refInputSenha = useRef(null);
 
   useEffect(() => {
-    setIsEmailValid(email.length === 0 || validateEmail(email)); // Email is considered valid if it's empty or matches the regex
+    setIsEmailValid(email.length === 0 || validateEmail(email));
   }, [email]);
 
   const handleLogin = () => {
-    setLoginAttempted(true); // Marca que uma tentativa de login foi feita
+
+    setLoginAttempted(true);
+
     const emailIsValid = validateEmail(email);
     setIsEmailValid(emailIsValid);
 
@@ -41,11 +43,6 @@ const TelaDeAutenticacao: React.FC = () => {
         <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <ScrollView contentContainerStyle={styles.scrollViewContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.containerFormulario}>
-              {!isEmailValid && loginAttempted && (
-                  <Text style={styles.validationMessage}>
-                    O formato do email não é válido.
-                  </Text>
-              )}
               <TextInput
                   ref={refInputEmail}
                   label="Email"
@@ -69,15 +66,20 @@ const TelaDeAutenticacao: React.FC = () => {
                   readOnly={false}
                   aria-label="Campo de entrada de senha"
               />
+              {!isEmailValid && loginAttempted && (
+                  <Text style={styles.validationMessage}>
+                    O formato do email não é válido.
+                  </Text>
+              )}
             </View>
             <View style={styles.containerBotoes}>
-              <Button mode="contained" onPress={handleLogin} style={styles.button} aria-label="Botão de entrar">
+              <Button mode="contained" onPress={handleLogin} style={styles.botaoEntrar} aria-label="Botão de entrar">
                 Entrar
               </Button>
-              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.button} aria-label="Botão de entrar com Google">
+              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
                 Entrar com Google
               </Button>
-              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.button} aria-label="Botão de entrar com Facebook">
+              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.botaoEntrarFacebook} aria-label="Botão de entrar com Facebook">
                 Entrar com Facebook
               </Button>
             </View>
@@ -100,12 +102,12 @@ const styles = StyleSheet.create({
   },
   containerFormulario: {
     paddingTop: '30%',
-    paddingBottom: '25%',
+    paddingBottom: '5%',
     marginLeft: '10%',
     marginRight: '10%',
   },
   containerBotoes: {
-    paddingBottom: 40,
+    paddingBottom: '30%',
     marginLeft: '10%',
     marginRight: '10%',
   },
@@ -114,7 +116,18 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 20,
   },
-  button: {
+  botaoEntrar: {
+    width: '95%',
+    alignSelf: 'center',
+    marginBottom: '25%',
+    backgroundColor: '#88c9bf'
+  },
+  botaoEntrarGoogle: {
+    width: '95%',
+    alignSelf: 'center',
+    marginBottom: '7%'
+  },
+  botaoEntrarFacebook: {
     width: '95%',
     alignSelf: 'center',
     marginBottom: '7%',
@@ -125,7 +138,7 @@ const styles = StyleSheet.create({
   },
   validationMessage: {
     alignSelf: 'center',
-    color: 'red', // Feel free to adjust the color
+    color: 'red',
     marginBottom: 10,
   },
 });
