@@ -54,11 +54,11 @@ jobs:
         working-directory: ./frontend
 
       - name: Build Expo project on Android
-        run: expo build:android --non-interactive
+        run: npx expo build:android --non-interactive
         working-directory: ./frontend
 
       - name: Build Expo project on iOS
-        run: expo build:ios --non-interactive
+        run: npx expo build:ios --non-interactive
         working-directory: ./frontend
 
   test:
