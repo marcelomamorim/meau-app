@@ -32,6 +32,7 @@ jobs:
         working-directory: ./frontend
 
   test:
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       matrix:
