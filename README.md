@@ -2,7 +2,7 @@
 
 ## Documentando
 
-Aplicativo para adoção responsável de animais de estimacao
+Aplicativo para adoção responsavel de animais de estimacao (trabalho de graduação)
 
 # Tecnologias
 
