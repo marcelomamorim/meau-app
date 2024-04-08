@@ -8,17 +8,17 @@ describe('Tela de Onboarding', () => {
         const { getByText } = render(<OnboardingScreen />);
         expect(getByText('Ops!')).toBeTruthy();
         expect(getByText('Você não pode realizar esta ação sem possuir um cadastro.')).toBeTruthy();
-        expect(getByText('Fazer Cadastro')).toBeTruthy();
+        expect(getByText('FAZER CADASTRO')).toBeTruthy();
         expect(getByText('Já possui cadastro?')).toBeTruthy();
-        expect(getByText('Fazer Login')).toBeTruthy();
+        expect(getByText('FAZER LOGIN')).toBeTruthy();
     });
 
     it('exibe mensagens e botões esperados', () => {
         const { getByText } = render(<OnboardingScreen />);
         expect(getByText('Ops!')).toBeTruthy();
         expect(getByText('Você não pode realizar esta ação sem possuir um cadastro.')).toBeTruthy();
-        expect(getByText('Fazer Cadastro')).toBeTruthy();
+        expect(getByText('FAZER CADASTRO')).toBeTruthy();
         expect(getByText('Já possui cadastro?')).toBeTruthy();
-        expect(getByText('Fazer Login')).toBeTruthy();
+        expect(getByText('FAZER LOGIN')).toBeTruthy();
     });
 });
