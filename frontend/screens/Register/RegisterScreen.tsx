@@ -78,20 +78,20 @@ const RegistrationScreen = () => {
             </View>
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-                <TextInput placeholder="Nome completo" onChangeText={(text) => handleTextInputChange('nomeCompleto', text)} style={styles.input} />
-                <TextInput placeholder="Idade" keyboardType="numeric" onChangeText={(text) => handleTextInputChange('idade', text)} style={styles.input} />
-                <TextInput placeholder="Email" keyboardType="email-address" onChangeText={(text) => handleTextInputChange('email', text)} style={styles.input} />
-                <TextInput placeholder="Estado" onChangeText={(text) => handleTextInputChange('estado', text)} style={styles.input} />
-                <TextInput placeholder="Cidade" onChangeText={(text) => handleTextInputChange('cidade', text)} style={styles.input} />
-                <TextInput placeholder="Endereço" onChangeText={(text) => handleTextInputChange('endereco', text)} style={styles.input} />
-                <TextInput placeholder="Telefone" keyboardType="phone-pad" onChangeText={(text) => handleTextInputChange('telefone', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome completo" onChangeText={(text) => handleTextInputChange('nomeCompleto', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Idade" keyboardType="numeric" onChangeText={(text) => handleTextInputChange('idade', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Email" keyboardType="email-address" onChangeText={(text) => handleTextInputChange('email', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Estado" onChangeText={(text) => handleTextInputChange('estado', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Cidade" onChangeText={(text) => handleTextInputChange('cidade', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Endereço" onChangeText={(text) => handleTextInputChange('endereco', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Telefone" keyboardType="phone-pad" onChangeText={(text) => handleTextInputChange('telefone', text)} style={styles.input} />
             </View>
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Informações de Perfil</Text>
-                <TextInput placeholder="Nome do usuário" onChangeText={(text) => handleTextInputChange('nomeUsuario', text)} style={styles.input} />
-                <TextInput placeholder="Senha" secureTextEntry onChangeText={(text) => handleTextInputChange('senha', text)} style={styles.input} />
-                <TextInput placeholder="Confirmação de senha" secureTextEntry onChangeText={(text) => handleTextInputChange('confirmacaoSenha', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome do usuário" onChangeText={(text) => handleTextInputChange('nomeUsuario', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Senha" secureTextEntry onChangeText={(text) => handleTextInputChange('senha', text)} style={styles.input} />
+                <TextInput placeholderTextColor='#bdbdbd' placeholder="Confirmação de senha" secureTextEntry onChangeText={(text) => handleTextInputChange('confirmacaoSenha', text)} style={styles.input} />
             </View>
 
             <View style={styles.section}>
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 30,
-        color: '#cfe9e5'
+        color: '#434343'
     },
     input: {
         height: 40,
@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         textAlign: 'center',
+        fontFamily: 'Roboto'
     },
     imagePicker: {
         marginBottom: 20,
