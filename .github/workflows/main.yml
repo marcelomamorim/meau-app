@@ -47,6 +47,7 @@ jobs:
 
       - name: Install Expo CLI
         run: npm install -g expo-cli
+        working-directory: ./frontend
 
       - name: Build Expo project on Android
         run: expo build:android --non-interactive
