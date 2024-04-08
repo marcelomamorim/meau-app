@@ -4,39 +4,18 @@ import { TextInput, Button } from 'react-native-paper';
 
 const TelaDeAutenticacao: React.FC = () => {
 
-  const [email, setEmail] = useState('');
+  const [nomeUsuario, setNomeUsuario] = useState('');
   const [senha, setSenha] = useState('');
-  const [isEmailValid, setIsEmailValid] = useState(false);
-  const [loginAttempted, setLoginAttempted] = useState(false);
 
   const refInputEmail = useRef(null);
   const refInputSenha = useRef(null);
 
-  useEffect(() => {
-    setIsEmailValid(email.length === 0 || validateEmail(email));
-  }, [email]);
-
   const handleLogin = () => {
-
-    setLoginAttempted(true);
-
-    const emailIsValid = validateEmail(email);
-    setIsEmailValid(emailIsValid);
-
-    if (!emailIsValid) {
-      console.log('O formato do email não é válido.');
-      return;
-    }
-    console.log('Entrar com:', email, senha);
+    console.log('Entrar com:', nomeUsuario, senha);
   };
 
   const handleLoginGoogle = () => console.log('Entrar com Google');
   const handleLoginFacebook = () => console.log('Entrar com Facebook');
-
-  const validateEmail = (email: string) => {
-    const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@"]+\.)+[^<>()[\]\\.,;:\s@"]{2,})$/i;
-    return re.test(email);
-  };
 
   return (
       <SafeAreaView style={styles.safeAreaView}>
@@ -45,13 +24,15 @@ const TelaDeAutenticacao: React.FC = () => {
             <View style={styles.containerFormulario}>
               <TextInput
                   ref={refInputEmail}
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  mode="outlined"
+                  label="Nome de usuário"
+                  value={nomeUsuario}
+                  onChangeText={setNomeUsuario}
+                  mode="flat"
                   style={styles.input}
-                  inputMode="email"
+                  underlineColor="transparent"
+                  inputMode="text"
                   readOnly={false}
+                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
                   aria-label="Campo de entrada de email"
               />
               <TextInput
@@ -60,27 +41,28 @@ const TelaDeAutenticacao: React.FC = () => {
                   value={senha}
                   onChangeText={setSenha}
                   secureTextEntry
-                  mode="outlined"
+                  mode="flat"
+                  underlineColor="transparent"
                   style={styles.input}
                   inputMode="text"
                   readOnly={false}
+                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
                   aria-label="Campo de entrada de senha"
               />
-              {!isEmailValid && loginAttempted && (
-                  <Text style={styles.validationMessage}>
-                    O formato do email não é válido.
-                  </Text>
-              )}
             </View>
             <View style={styles.containerBotoes}>
-              <Button mode="contained" onPress={handleLogin} style={styles.botaoEntrar} aria-label="Botão de entrar">
-                Entrar
-              </Button>
-              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
-                Entrar com Google
+              <Button mode="contained"
+                      onPress={handleLogin}
+                      style={styles.botaoEntrar}
+                      aria-label="Botão de entrar"
+              >
+                ENTRAR
               </Button>
               <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.botaoEntrarFacebook} aria-label="Botão de entrar com Facebook">
-                Entrar com Facebook
+                ENTRAR COM FACEBOOK
+              </Button>
+              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
+                ENTRAR COM GOOGLE
               </Button>
             </View>
           </ScrollView>
@@ -110,37 +92,39 @@ const styles = StyleSheet.create({
     paddingBottom: '30%',
     marginLeft: '10%',
     marginRight: '10%',
+    color: '#fafafa'
   },
   input: {
     width: '95%',
     alignSelf: 'center',
     marginBottom: 20,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#d5cece'
   },
   botaoEntrar: {
     width: '95%',
     alignSelf: 'center',
     marginBottom: '25%',
-    backgroundColor: '#88c9bf'
+    backgroundColor: '#88c9bf',
+    padding: 12
   },
   botaoEntrarGoogle: {
     width: '95%',
     alignSelf: 'center',
-    marginBottom: '7%'
+    marginBottom: '7%',
+    padding: 12
   },
   botaoEntrarFacebook: {
     width: '95%',
     alignSelf: 'center',
     marginBottom: '7%',
+    padding: 12
   },
   label: {
     alignSelf: 'center',
     marginBottom: 10,
-  },
-  validationMessage: {
-    alignSelf: 'center',
-    color: 'red',
-    marginBottom: 10,
-  },
+  }
 });
 
 export default TelaDeAutenticacao;

@@ -18,13 +18,13 @@ const OnboardingScreen = () => {
             <Text style={styles.message}>Você não pode realizar esta ação sem possuir um cadastro.</Text>
 
             <TouchableOpacity style={[styles.button, styles.registerButton]} onPress={handleRegister}>
-                <Text style={styles.buttonText}>Fazer Cadastro</Text>
+                <Text style={styles.buttonText}>FAZER CADASTRO</Text>
             </TouchableOpacity>
 
             <Text style={styles.question}>Já possui cadastro?</Text>
 
             <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Fazer Login</Text>
+                <Text style={styles.buttonText}>FAZER LOGIN</Text>
             </TouchableOpacity>
         </View>
     );
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
         fontSize: 53,
         fontWeight: 'bold',
         color: '#88c9bf',
-        marginBottom: '30%',
+        marginBottom: '20%',
         fontFamily: 'Courgette-Regular'
     },
     message: {

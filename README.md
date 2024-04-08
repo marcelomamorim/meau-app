@@ -2,21 +2,26 @@
 
 ## Documentando
 
-Aplicativo para adoção responsavel de animais de estimacao
+Aplicativo para adoção responsável de animais de estimacao
 
 # Tecnologias
 
 - Expo
 - Typescript
-- VS Code
 
 # Boas praticas
 
-- Conventional commits
-- Gitflow
-- Semantic Versioning
-- CI/CD
-- Web Content Accessibility Guidelines (WCAG) 2.1
+- Conventional commits: https://www.conventionalcommits.org/pt-br/v1.0.0/
+- Gitflow: https://www.atlassian.com/br/git/tutorials/comparing-workflows/gitflow-workflow
+- Semantic Versioning: https://semver.org/spec/v2.0.0.html
+- CI/CD: https://www.redhat.com/pt-br/topics/devops/what-is-ci-cd
+- Web Content Accessibility Guidelines (WCAG) 2.1: https://www.w3.org/TR/WCAG21/
+
+# CI/CD
+
+- Setup
+- Build
+- Test
 
 
 
