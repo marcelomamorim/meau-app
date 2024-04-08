@@ -46,19 +46,19 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install Expo CLI
-        run: npm install expo-cli@latest
+        run: npm install -g expo-cli@latest
         working-directory: ./frontend
 
       - name: Check Expo Installation
-        run: npx expo --version
+        run: expo --version
         working-directory: ./frontend
 
       - name: Build Expo project on Android
-        run: npx expo build:android --non-interactive
+        run: expo build:android --non-interactive
         working-directory: ./frontend
 
       - name: Build Expo project on iOS
-        run: npx expo build:ios --non-interactive
+        run: expo build:ios --non-interactive
         working-directory: ./frontend
 
   test:
