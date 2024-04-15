@@ -1,21 +1,52 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform } from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
+import { initializeApp } from '@firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from '@firebase/auth';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAPhe4QT0dqB9LPtmyZ6eLivJP_BuZ3Q4s",
+  authDomain: "miauapp-3001d.firebaseapp.com",
+  projectId: "miauapp-3001d",
+  storageBucket: "miauapp-3001d.appspot.com",
+  messagingSenderId: "984809883894",
+  appId: "1:984809883894:web:f4ee0d1c9c6331aa3584d7",
+  measurementId: "G-QV3M8DEXJM"
+};
+
+const app = initializeApp(firebaseConfig);
 
 const TelaDeAutenticacao: React.FC = () => {
-
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const [user, setUser] = useState(null); // Track user authentication state
 
-  const refInputEmail = useRef(null);
-  const refInputSenha = useRef(null);
+  const auth = getAuth(app);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
 
-  const handleLogin = () => {
-    console.log('Entrar com:', nomeUsuario, senha);
+    return () => unsubscribe();
+  }, [auth]);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, nomeUsuario, senha);
+      console.log('Usuário logado com sucesso!');
+    } catch (error) {
+      console.error('Erro de autenticação:', error.message);
+    }
   };
 
-  const handleLoginGoogle = () => console.log('Entrar com Google');
-  const handleLoginFacebook = () => console.log('Entrar com Facebook');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log('Usuário deslogado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error.message);
+    }
+  };
 
   return (
       <SafeAreaView style={styles.safeAreaView}>
@@ -23,7 +54,6 @@ const TelaDeAutenticacao: React.FC = () => {
           <ScrollView contentContainerStyle={styles.scrollViewContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.containerFormulario}>
               <TextInput
-                  ref={refInputEmail}
                   label="Nome de usuário"
                   value={nomeUsuario}
                   onChangeText={setNomeUsuario}
@@ -31,12 +61,10 @@ const TelaDeAutenticacao: React.FC = () => {
                   style={styles.input}
                   underlineColor="transparent"
                   inputMode="text"
-                  readOnly={false}
                   theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
                   aria-label="Campo de entrada de email"
               />
               <TextInput
-                  ref={refInputSenha}
                   label="Senha"
                   value={senha}
                   onChangeText={setSenha}
@@ -45,25 +73,20 @@ const TelaDeAutenticacao: React.FC = () => {
                   underlineColor="transparent"
                   style={styles.input}
                   inputMode="text"
-                  readOnly={false}
                   theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
                   aria-label="Campo de entrada de senha"
               />
             </View>
             <View style={styles.containerBotoes}>
-              <Button mode="contained"
-                      onPress={handleLogin}
-                      style={styles.botaoEntrar}
-                      aria-label="Botão de entrar"
-              >
-                ENTRAR
-              </Button>
-              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.botaoEntrarFacebook} aria-label="Botão de entrar com Facebook">
-                ENTRAR COM FACEBOOK
-              </Button>
-              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
-                ENTRAR COM GOOGLE
-              </Button>
+              {user ? (
+                  <Button mode="contained" onPress={handleLogout} style={styles.botaoSair} aria-label="Botão de sair">
+                    SAIR
+                  </Button>
+              ) : (
+                  <Button mode="contained" onPress={handleLogin} style={styles.botaoEntrar} aria-label="Botão de entrar">
+                    ENTRAR
+                  </Button>
+              )}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -109,22 +132,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#88c9bf',
     padding: 12
   },
-  botaoEntrarGoogle: {
+  botaoSair: {
     width: '95%',
     alignSelf: 'center',
-    marginBottom: '7%',
+    marginBottom: '25%',
+    backgroundColor: '#e74c3c',
     padding: 12
   },
-  botaoEntrarFacebook: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '7%',
-    padding: 12
-  },
-  label: {
-    alignSelf: 'center',
-    marginBottom: 10,
-  }
 });
 
 export default TelaDeAutenticacao;
