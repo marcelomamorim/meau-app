@@ -12,6 +12,10 @@ const OnboardingScreen = () => {
         router.navigate('login')
     };
 
+    const handleCadastroAnimal = () => {
+        router.navigate('animal-registro')
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Ops!</Text>
