@@ -1,71 +1,88 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform} from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Button, Snackbar } from 'react-native-paper';
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "@firebase/auth";
+import { FIREBASE_APP } from "@/config/config";
 
-const TelaDeAutenticacao: React.FC = () => {
-
+const TelaDeAutenticacao = () => {
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [senha, setSenha] = useState('');
+  const [user, setUser] = useState(null); // Track user authentication state
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const refInputEmail = useRef(null);
-  const refInputSenha = useRef(null);
+  const auth = getAuth(FIREBASE_APP);
 
-  const handleLogin = () => {
-    console.log('Entrar com:', nomeUsuario, senha);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+
+    return () => unsubscribe();
+  }, [auth]);
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, nomeUsuario, senha);
+      setSnackbarMessage('Usuário logado com sucesso!');
+      setSnackbarVisible(true);
+    } catch (error) {
+      setSnackbarMessage('Login ou senha incorretos');
+      setSnackbarVisible(true);
+    }
   };
 
-  const handleLoginGoogle = () => console.log('Entrar com Google');
-  const handleLoginFacebook = () => console.log('Entrar com Facebook');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setSnackbarMessage('Usuário deslogado com sucesso!');
+      setSnackbarVisible(true);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error.message);
+    }
+  };
 
   return (
       <SafeAreaView style={styles.safeAreaView}>
         <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-          <ScrollView contentContainerStyle={styles.scrollViewContainer} keyboardShouldPersistTaps="handled">
-            <View style={styles.containerFormulario}>
-              <TextInput
-                  ref={refInputEmail}
-                  label="Nome de usuário"
-                  value={nomeUsuario}
-                  onChangeText={setNomeUsuario}
-                  mode="flat"
-                  style={styles.input}
-                  underlineColor="transparent"
-                  inputMode="text"
-                  readOnly={false}
-                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
-                  aria-label="Campo de entrada de email"
-              />
-              <TextInput
-                  ref={refInputSenha}
-                  label="Senha"
-                  value={senha}
-                  onChangeText={setSenha}
-                  secureTextEntry
-                  mode="flat"
-                  underlineColor="transparent"
-                  style={styles.input}
-                  inputMode="text"
-                  readOnly={false}
-                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
-                  aria-label="Campo de entrada de senha"
-              />
-            </View>
-            <View style={styles.containerBotoes}>
-              <Button mode="contained"
-                      onPress={handleLogin}
-                      style={styles.botaoEntrar}
-                      aria-label="Botão de entrar"
-              >
-                ENTRAR
-              </Button>
-              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.botaoEntrarFacebook} aria-label="Botão de entrar com Facebook">
-                ENTRAR COM FACEBOOK
-              </Button>
-              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
-                ENTRAR COM GOOGLE
-              </Button>
-            </View>
-          </ScrollView>
+          <View style={styles.containerFormulario}>
+            <TextInput
+                label="Nome de usuário"
+                value={nomeUsuario}
+                onChangeText={setNomeUsuario}
+                mode="flat"
+                style={styles.input}
+                underlineColor="transparent"
+                inputMode="text"
+                theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
+                aria-label="Campo de entrada de email"
+            />
+            <TextInput
+                label="Senha"
+                value={senha}
+                onChangeText={setSenha}
+                secureTextEntry
+                mode="flat"
+                underlineColor="transparent"
+                style={styles.input}
+                inputMode="text"
+                theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
+                aria-label="Campo de entrada de senha"
+            />
+          </View>
+          <View style={styles.containerBotoes}>
+            <Button mode="contained" onPress={handleLogin} style={styles.botaoEntrar} aria-label="Botão de entrar">
+              ENTRAR
+            </Button>
+          </View>
+          <Snackbar
+              visible={snackbarVisible}
+              onDismiss={() => setSnackbarVisible(false)}
+              duration={3000}
+              style={{ backgroundColor: snackbarMessage === 'Usuário logado com sucesso!' ? 'green' : 'red' }}
+          >
+            {snackbarMessage}
+          </Snackbar>
         </KeyboardAvoidingView>
       </SafeAreaView>
   );
@@ -77,10 +94,6 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
-  },
-  scrollViewContainer: {
-    flexGrow: 1,
-    justifyContent: 'space-between',
   },
   containerFormulario: {
     paddingTop: '30%',
@@ -109,22 +122,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#88c9bf',
     padding: 12
   },
-  botaoEntrarGoogle: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '7%',
-    padding: 12
-  },
-  botaoEntrarFacebook: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '7%',
-    padding: 12
-  },
-  label: {
-    alignSelf: 'center',
-    marginBottom: 10,
-  }
 });
 
 export default TelaDeAutenticacao;
