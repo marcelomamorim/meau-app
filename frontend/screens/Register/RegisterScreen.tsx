@@ -1,13 +1,10 @@
-import React, {useState } from 'react';
-import {
-    ScrollView,
-    View,
-    Text,
-    TextInput,
-    StyleSheet,
-    TouchableOpacity,
-    Alert
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Platform, Alert, Image } from 'react-native';
+import { MaterialIcons } from "@expo/vector-icons";
+import * as ImagePicker from 'expo-image-picker';
+import { getAuth, createUserWithEmailAndPassword } from '@firebase/auth';
+import {FIREBASE_AUTH} from "@/config/config";
+import {ImagePickerSuccessResult} from "expo-image-picker";
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 
 
@@ -26,41 +23,64 @@ const RegistrationScreen = () => {
         confirmacaoSenha: '',
     });
 
+    const [error, setError] = useState('');
+
     const handleTextInputChange = (name: string, value: string) => {
         setFormData({ ...formData, [name]: value });
     };
 
     const handleFinishRegister = async () => {
-        console.log('registro')
+        const { nomeUsuario, senha, confirmacaoSenha } = formData;
+
+        if (!nomeUsuario || !senha || !confirmacaoSenha) {
+            setError('Nome de usuário e senha são campos obrigatórios.');
+            return;
+        }
+
+        if (senha !== confirmacaoSenha) {
+            setError('As senhas não coincidem.');
+            return;
+        }
+
+        const auth = FIREBASE_AUTH;
+        try {
+            await createUserWithEmailAndPassword(auth, formData.nomeUsuario, senha);
+            // Aqui você pode fazer algo após o cadastro, como navegar para outra tela
+            Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
+        } catch (error) {
+            setError('Erro ao criar usuário. Por favor, tente novamente.');
+        }
     };
 
     return (
-        <ScrollView style={styles.container} alwaysBounceVertical={true}>
+        <ScrollView style={styles.container}>
             <View style={styles.infoMessage}>
                 <Text style={styles.infoText}>As informações preenchidas serão divulgadas apenas para a pessoa com a qual você realizar o processo de adoção e/ou apadrinhamento, após a formalização do processo.</Text>
             </View>
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Informações Pessoais</Text>
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome completo" onChangeText={(text) => handleTextInputChange('nomeCompleto', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Idade" keyboardType="numeric" onChangeText={(text) => handleTextInputChange('idade', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Email" keyboardType="email-address" onChangeText={(text) => handleTextInputChange('email', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Estado" onChangeText={(text) => handleTextInputChange('estado', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Cidade" onChangeText={(text) => handleTextInputChange('cidade', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Endereço" onChangeText={(text) => handleTextInputChange('endereco', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Telefone" keyboardType="phone-pad" onChangeText={(text) => handleTextInputChange('telefone', text)} style={styles.input} />
+                <TextInput placeholder="Nome completo" onChangeText={(text) => handleTextInputChange('nomeCompleto', text)} style={styles.input} />
+                <TextInput placeholder="Idade" keyboardType="numeric" onChangeText={(text) => handleTextInputChange('idade', text)} style={styles.input} />
+                <TextInput placeholder="Email" keyboardType="email-address" onChangeText={(text) => handleTextInputChange('email', text)} style={styles.input} />
+                <TextInput placeholder="Estado" onChangeText={(text) => handleTextInputChange('estado', text)} style={styles.input} />
+                <TextInput placeholder="Cidade" onChangeText={(text) => handleTextInputChange('cidade', text)} style={styles.input} />
+                <TextInput placeholder="Endereço" onChangeText={(text) => handleTextInputChange('endereco', text)} style={styles.input} />
+                <TextInput placeholder="Telefone" keyboardType="phone-pad" onChangeText={(text) => handleTextInputChange('telefone', text)} style={styles.input} />
             </View>
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Informações de Perfil</Text>
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome do usuário" onChangeText={(text) => handleTextInputChange('nomeUsuario', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Senha" secureTextEntry onChangeText={(text) => handleTextInputChange('senha', text)} style={styles.input} />
-                <TextInput placeholderTextColor='#bdbdbd' placeholder="Confirmação de senha" secureTextEntry onChangeText={(text) => handleTextInputChange('confirmacaoSenha', text)} style={styles.input} />
+                <TextInput placeholder="Nome do usuário" onChangeText={(text) => handleTextInputChange('nomeUsuario', text)} style={styles.input} />
+                <TextInput placeholder="Senha" secureTextEntry onChangeText={(text) => handleTextInputChange('senha', text)} style={styles.input} />
+                <TextInput placeholder="Confirmação de senha" secureTextEntry onChangeText={(text) => handleTextInputChange('confirmacaoSenha', text)} style={styles.input} />
             </View>
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Foto de Perfil</Text>
                 <ImagePickerComponent onImagePicked={() => console.log('componente funcionando')}></ImagePickerComponent>
             </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
             <TouchableOpacity onPress={handleFinishRegister} style={styles.finishButton}>
                 <Text style={styles.finishButtonText}>Finalizar Cadastro</Text>
@@ -80,12 +100,12 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 30,
+        marginBottom: 10,
         color: '#434343'
     },
     input: {
         height: 40,
-        marginBottom: 30,
+        marginBottom: 20,
         borderWidth: 1,
         borderColor: '#ccc',
         padding: 10,
@@ -96,7 +116,6 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
         marginTop: 20,
-        marginBottom: '10%'
     },
     finishButtonText: {
         color: '#ffffff',
@@ -106,8 +125,7 @@ const styles = StyleSheet.create({
     infoMessage: {
         backgroundColor: '#cfe9e5',
         padding: 20,
-        marginBottom: 30,
-        marginTop: '5%'
+        marginBottom: 20,
     },
     infoText: {
         textAlign: 'center',
@@ -115,7 +133,6 @@ const styles = StyleSheet.create({
     },
     imagePicker: {
         marginBottom: 20,
-        marginTop: '5%',
         alignItems: 'center',
         justifyContent: 'center',
         width: 160,
@@ -124,17 +141,16 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#cccccc',
         backgroundColor: '#f0f0f0',
-        alignSelf: 'center',
     },
     imagePreview: {
-        width: 200,
-        height: 200,
-        borderRadius: 4,
+        width: 160,
+        height: 160,
+        borderRadius: 10,
     },
     imagePlaceholder: {
         width: '100%',
         height: '100%',
-        borderRadius: 4,
+        borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -142,6 +158,11 @@ const styles = StyleSheet.create({
         color: '#808080',
         marginTop: 8,
         fontSize: 16,
+    },
+    errorText: {
+        color: 'red',
+        textAlign: 'center',
+        marginBottom: 20,
     },
 });
 
