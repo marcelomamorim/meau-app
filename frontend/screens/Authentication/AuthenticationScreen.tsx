@@ -1,9 +1,8 @@
-import React, {useState, useRef, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform} from 'react-native';
+import React, { useState, useRef } from 'react';
+import {View, StyleSheet, ScrollView, KeyboardAvoidingView, SafeAreaView, Platform, Alert} from 'react-native';
 import { TextInput, Button } from 'react-native-paper';
 
 const TelaDeAutenticacao: React.FC = () => {
-
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [senha, setSenha] = useState('');
 
@@ -11,7 +10,7 @@ const TelaDeAutenticacao: React.FC = () => {
   const refInputSenha = useRef(null);
 
   const handleLogin = () => {
-    console.log('Entrar com:', nomeUsuario, senha);
+    console.log('login')
   };
 
   const handleLoginGoogle = () => console.log('Entrar com Google');
@@ -27,13 +26,10 @@ const TelaDeAutenticacao: React.FC = () => {
                   label="Nome de usuário"
                   value={nomeUsuario}
                   onChangeText={setNomeUsuario}
-                  mode="flat"
+                  mode="outlined"
+                  underlineColor= 'transparent'
                   style={styles.input}
-                  underlineColor="transparent"
-                  inputMode="text"
-                  readOnly={false}
-                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
-                  aria-label="Campo de entrada de email"
+                  theme={{ colors: { primary: '#000', background: '#fff' } }}
               />
               <TextInput
                   ref={refInputSenha}
@@ -41,27 +37,37 @@ const TelaDeAutenticacao: React.FC = () => {
                   value={senha}
                   onChangeText={setSenha}
                   secureTextEntry
-                  mode="flat"
-                  underlineColor="transparent"
+                  mode="outlined"
+                  underlineColor= "transparent"
                   style={styles.input}
-                  inputMode="text"
-                  readOnly={false}
-                  theme={{ colors: { primary: '#000', background: '#F5F5F5' }}}
-                  aria-label="Campo de entrada de senha"
+                  theme={{ colors: { primary: '#000', background: '#fff' } }}
               />
             </View>
             <View style={styles.containerBotoes}>
-              <Button mode="contained"
-                      onPress={handleLogin}
-                      style={styles.botaoEntrar}
-                      aria-label="Botão de entrar"
+              <Button
+                  mode="contained"
+                  onPress={handleLogin}
+                  style={styles.botaoEntrar}
+                  labelStyle={styles.buttonLabel}
               >
                 ENTRAR
               </Button>
-              <Button icon="facebook" mode="outlined" onPress={handleLoginFacebook} style={styles.botaoEntrarFacebook} aria-label="Botão de entrar com Facebook">
+              <Button
+                  icon="facebook"
+                  mode="contained"
+                  onPress={handleLoginFacebook}
+                  style={[styles.botao, styles.botaoEntrarFacebook]}
+                  labelStyle={styles.buttonLabel}
+              >
                 ENTRAR COM FACEBOOK
               </Button>
-              <Button icon="google" mode="outlined" onPress={handleLoginGoogle} style={styles.botaoEntrarGoogle} aria-label="Botão de entrar com Google">
+              <Button
+                  icon="google"
+                  mode="contained"
+                  onPress={handleLoginGoogle}
+                  style={[styles.botao, styles.botaoEntrarGoogle]}
+                  labelStyle={styles.buttonLabel}
+              >
                 ENTRAR COM GOOGLE
               </Button>
             </View>
@@ -74,57 +80,44 @@ const TelaDeAutenticacao: React.FC = () => {
 const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   scrollViewContainer: {
     flexGrow: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   containerFormulario: {
-    paddingTop: '30%',
-    paddingBottom: '5%',
-    marginLeft: '10%',
-    marginRight: '10%',
+    marginHorizontal: '10%',
   },
   containerBotoes: {
-    paddingBottom: '30%',
-    marginLeft: '10%',
-    marginRight: '10%',
-    color: '#fafafa'
+    marginHorizontal: '10%',
+    marginTop: '5%',
   },
   input: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#d5cece'
   },
   botaoEntrar: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '25%',
+    marginBottom: 15,
     backgroundColor: '#88c9bf',
-    padding: 12
   },
-  botaoEntrarGoogle: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '7%',
-    padding: 12
+  botao: {
+    marginBottom: 15,
+    paddingVertical: 5,
   },
   botaoEntrarFacebook: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '7%',
-    padding: 12
+    backgroundColor: '#3b5998',
+    marginTop: 50
   },
-  label: {
-    alignSelf: 'center',
-    marginBottom: 10,
-  }
+  botaoEntrarGoogle: {
+    backgroundColor: '#db4437',
+  },
+  buttonLabel: {
+    color: '#fff',
+  },
 });
 
 export default TelaDeAutenticacao;

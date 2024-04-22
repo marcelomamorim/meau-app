@@ -15,7 +15,9 @@ const SplashScreen = () => {
         };
 
         loadFonts().then( () => console.log('Fontes carregadas'));
-        setTimeout(() => router.navigate('/onboard'), 2000);
+
+        setTimeout(() => router.navigate('/home'), 2000);
+
     }, []);
 
     return (

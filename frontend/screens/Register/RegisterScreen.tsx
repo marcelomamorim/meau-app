@@ -1,18 +1,14 @@
-import React, {useEffect, useState } from 'react';
+import React, {useState } from 'react';
 import {
     ScrollView,
     View,
     Text,
     TextInput,
-    Image,
     StyleSheet,
     TouchableOpacity,
-    Alert,
-    Platform
+    Alert
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import {ImagePickerSuccessResult} from "expo-image-picker";
-import {MaterialIcons} from "@expo/vector-icons";
+import ImagePickerComponent from "@/components/ImagePickerComponent";
 
 
 const RegistrationScreen = () => {
@@ -30,45 +26,12 @@ const RegistrationScreen = () => {
         confirmacaoSenha: '',
     });
 
-    const [image, setImage] = useState(null);
-
-    useEffect(() => {
-        requestMediaLibraryPermissions().then( () => {
-            console.log('Permissao solicitada!')
-        });
-    }, []);
-
-    const requestMediaLibraryPermissions = async () => {
-        if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-                Alert.alert('Sorry, we need media library permissions to make this work!');
-            }
-        }
-    };
-
-    const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,
-        });
-
-        // @ts-expect-error: resolving types
-        if (result as ImagePickerSuccessResult && result.assets?.length > 0) {
-            // @ts-expect-error: resolving types
-            setImage(result.assets?.at(0).uri);
-        }
-    };
-
     const handleTextInputChange = (name: string, value: string) => {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleFinishRegister = () => {
-        console.log(formData);
-        console.log(image);
+    const handleFinishRegister = async () => {
+        console.log('registro')
     };
 
     return (
@@ -96,16 +59,7 @@ const RegistrationScreen = () => {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Foto de Perfil</Text>
-                <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
-                    {image ? (
-                        <Image source={{ uri: image }} style={styles.imagePreview} />
-                    ) : (
-                        <View style={styles.imagePlaceholder}>
-                            <MaterialIcons name="camera-alt" size={40} color="#808080" />
-                            <Text style={styles.placeholderText}>Selecione uma foto</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
+                <ImagePickerComponent onImagePicked={() => console.log('componente funcionando')}></ImagePickerComponent>
             </View>
 
             <TouchableOpacity onPress={handleFinishRegister} style={styles.finishButton}>

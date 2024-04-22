@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import {router} from "expo-router";
 
-const OnboardingScreen = () => {
+const UnregisteredAccountScreen = () => {
 
     const handleRegister = () => {
         router.navigate('register');
@@ -87,4 +87,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default OnboardingScreen;
+export default UnregisteredAccountScreen;
