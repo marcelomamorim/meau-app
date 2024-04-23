@@ -1,11 +1,16 @@
 import React from 'react';
 import AnimalRegisterScreen from "@/screens/AnimalRegister/AnimalRegisterScreen";
+import AuthorizationLayerWrapper from "@/components/AuthorizationLayer";
 
-const Login = () => {
+const CadastroAnimal = () => {
     return (
-        <><AnimalRegisterScreen>
-        </AnimalRegisterScreen></>
+        <>
+            <AuthorizationLayerWrapper>
+                <AnimalRegisterScreen>
+                </AnimalRegisterScreen>
+            </AuthorizationLayerWrapper>
+        </>
     );
 };
 
-export default Login;
+export default CadastroAnimal;

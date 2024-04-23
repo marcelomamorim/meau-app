@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
-import {
-    ScrollView,
-    View,
-    Text,
-    TextInput,
-    StyleSheet,
-    TouchableOpacity
-} from 'react-native';
+import React, {useState} from 'react';
+import {ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+
+import {AntDesign} from '@expo/vector-icons';
+import {db, FIREBASE_AUTH} from '@/config/config';
+import {doc, getDoc, setDoc} from 'firebase/firestore';
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 
-interface FormData {
+interface Animal {
     [key: string]: any;
     nome: string;
     idade: 'Filhote' | 'Adulto' | 'Idoso';
@@ -19,12 +16,15 @@ interface FormData {
     temperamento: string[];
     saude: string[];
     necessidades: string[];
-    objetos: string;
+    objetos: string[];
 }
 
 const AnimalRegisterScreen = () => {
 
-    const [formData, setFormData] = useState<FormData>({
+    const [currentObject, setCurrentObject] = useState('');
+    const [objectsList, setObjectsList] = useState<string[]>([]);
+
+    const [dadosCadastraisDoAnimal, setDadosCadastraisDoAnimal] = useState<Animal>({
         nome: '',
         idade: 'Filhote',
         especie: 'Cachorro',
@@ -33,17 +33,68 @@ const AnimalRegisterScreen = () => {
         temperamento: [],
         saude: [],
         necessidades: [],
-        objetos: '',
+        objetos: [],
+        responsavel: ''
     });
 
+    const getUserEmail = (): string => {
+        const user = FIREBASE_AUTH.currentUser;
+        if (user && user.email) {
+            console.log("Authenticated user's email:", user.email);
+            return user.email;
+        } else {
+            console.log("No user is currently signed in or email is null.");
+            return '';
+        }
+    }
+
+    const addPetToFirestore = async (animal: Animal) => {
+        const userEmail = getUserEmail();
+        if (!userEmail) {
+            console.error("No user email available, cannot add pet.");
+            return;
+        }
+
+        const usuarioRef = doc(db, "usuarios", userEmail);
+        const usuarioSnap = await getDoc(usuarioRef);
+
+        if (usuarioSnap.exists()) {
+            try {
+                animal["responsavel"] = usuarioRef;
+                const newPetRef = doc(db, 'animais', animal.nome);
+                await setDoc(newPetRef, animal);
+                console.log('Pet added successfully:', animal);
+            } catch (error) {
+                console.error('Error adding pet to Firestore:', error);
+                throw error;
+            }
+        } else {
+            console.error("User document does not exist in Firestore.");
+        }
+    }
+
+    const handleAddObject = () => {
+        if (currentObject.trim() !== '') {
+            const updatedObjectsList = [...objectsList, currentObject.trim()];
+            setObjectsList(updatedObjectsList);
+            dadosCadastraisDoAnimal["objetos"] = updatedObjectsList;
+            setCurrentObject('');
+        }
+    };
+
+    const handleDeleteObject = (index: number) => {
+        const updatedObjectsList = objectsList.filter((_, i) => i !== index);
+        setObjectsList(updatedObjectsList);
+        dadosCadastraisDoAnimal["objetos"] = updatedObjectsList
+    };
 
     const renderRadioButton = (label: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined, formField: string, value: string) => (
         <TouchableOpacity
-            onPress={() => setFormData({ ...formData, [formField]: value })}
+            onPress={() => setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, [formField]: value })}
             style={styles.radioButton}
         >
             <View style={styles.radioButtonIcon}>
-                {formData[formField] === value && <View style={styles.radioButtonIconInner} />}
+                {dadosCadastraisDoAnimal[formField] === value && <View style={styles.radioButtonIconInner} />}
             </View>
             <Text style={styles.radioButtonText}>{label}</Text>
         </TouchableOpacity>
@@ -55,11 +106,11 @@ const AnimalRegisterScreen = () => {
             onPress={() => handleCheckboxChange(category, option)}
             style={[
                 styles.checkbox,
-                styles.checkboxSelected && formData[category].includes(option)
+                styles.checkboxSelected && dadosCadastraisDoAnimal[category].includes(option)
             ]}
         >
             <View style={styles.checkboxIcon}>
-                {formData[category].includes(option) && <View style={styles.checkboxIconInner} />}
+                {dadosCadastraisDoAnimal[category].includes(option) && <View style={styles.checkboxIconInner} />}
             </View>
             <Text style={styles.checkboxText}>{option}</Text>
         </TouchableOpacity>
@@ -67,16 +118,20 @@ const AnimalRegisterScreen = () => {
 
     const handleCheckboxChange = (name: string, value: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => {
         let updatedValues;
-        if (formData[name].includes(value)) {
-            updatedValues = formData[name].filter((item: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => item !== value);
+        if (dadosCadastraisDoAnimal[name].includes(value)) {
+            updatedValues = dadosCadastraisDoAnimal[name].filter((item: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => item !== value);
         } else {
-            updatedValues = [...formData[name], value];
+            updatedValues = [...dadosCadastraisDoAnimal[name], value];
         }
-        setFormData({...formData, [name]: updatedValues});
+        setDadosCadastraisDoAnimal({...dadosCadastraisDoAnimal, [name]: updatedValues});
     };
 
     const handleFinishRegister = () => {
-        console.log(formData);
+        console.log(dadosCadastraisDoAnimal);
+        addPetToFirestore(dadosCadastraisDoAnimal).then(r =>
+            () => console.log(r),
+            (error) => console.log(error)
+        )
     };
 
     return (
@@ -90,7 +145,7 @@ const AnimalRegisterScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Informações do Animal</Text>
                     <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome do animal"
-                               onChangeText={(text) => setFormData({...formData, nome: text})} style={styles.input}/>
+                               onChangeText={(text) => setDadosCadastraisDoAnimal({...dadosCadastraisDoAnimal, nome: text})} style={styles.input}/>
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Foto do Animal</Text>
@@ -148,13 +203,31 @@ const AnimalRegisterScreen = () => {
                         {renderCheckbox('necessidades', 'Medicamento')}
                     </View>
 
-                    {/* Objetos */}
-                    <TextInput placeholderTextColor='#bdbdbd' placeholder="Objetos"
-                               onChangeText={(text) => setFormData({...formData, objetos: text})} style={styles.input}/>
+                    <Text style={styles.label}>Objetos</Text>
+                    <TextInput
+                        placeholderTextColor='#bdbdbd'
+                        placeholder="Adicione um objeto"
+                        value={currentObject}
+                        onChangeText={setCurrentObject}
+                        onSubmitEditing={handleAddObject} // This allows users to add items by pressing the return key on the keyboard
+                        style={styles.input}
+                    />
+                    <TouchableOpacity onPress={handleAddObject} style={styles.button}>
+                        <Text style={styles.buttonText}>Adicionar objeto</Text>
+                    </TouchableOpacity>
+
+                    {objectsList.map((object, index) => (
+                        <View key={index} style={styles.objectItem}>
+                            <Text style={styles.objectText}>{object}</Text>
+                            <TouchableOpacity onPress={() => handleDeleteObject(index)} style={styles.deleteButton}>
+                                <AntDesign name="delete" size={20} color="white" />
+                            </TouchableOpacity>
+                        </View>
+                    ))}
                 </View>
 
                 <TouchableOpacity onPress={handleFinishRegister} style={styles.finishButton}>
-                    <Text style={styles.finishButtonText}>Finalizar Cadastro</Text>
+                    <Text style={styles.finishButtonText}>Procurar ajuda</Text>
                 </TouchableOpacity>
             </ScrollView>
         </View>
@@ -162,6 +235,45 @@ const AnimalRegisterScreen = () => {
 };
 
 const styles = StyleSheet.create({
+    button: {
+        backgroundColor: '#5E72E4',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 30,
+        alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 3,
+        marginTop: 10,
+    },
+    buttonText: {
+        color: 'white',
+        fontWeight: '600',
+        fontSize: 16,
+    },
+    objectItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        marginVertical: 5,
+        padding: 10,
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        shadowColor: '#000',
+        shadowOffset: { height: 1, width: 1 },
+        elevation: 1,
+    },
+    objectText: {
+        flex: 1,
+        marginLeft: 10,
+    },
+    deleteButton: {
+        backgroundColor: '#f52121',
+        padding: 5,
+        borderRadius: 25,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',

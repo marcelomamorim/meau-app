@@ -5,7 +5,7 @@ import {router} from "expo-router";
 const UnregisteredAccountScreen = () => {
 
     const handleRegister = () => {
-        router.navigate('register');
+        router.navigate('cadastro-pessoa');
     };
 
     const handleLogin = () => {

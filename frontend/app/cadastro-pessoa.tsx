@@ -1,12 +1,12 @@
 import React from 'react';
 
-import RegisterScreen from "@/screens/Register/RegisterScreen";
+import RegisterScreen from "@/screens/UserRegister/RegisterScreen";
 
-const Login = () => {
+const CadastroPessoa = () => {
     return (
         <><RegisterScreen>
         </RegisterScreen></>
     );
 };
 
-export default Login;
+export default CadastroPessoa;

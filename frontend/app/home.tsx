@@ -1,12 +1,16 @@
 import React from 'react';
 
 import HomeScreen from "@/screens/Home/HomeScreen";
+import AuthorizationLayerWrapper from '@/components/AuthorizationLayer';
 
 const Home = () => {
     return (
         <>
-        <HomeScreen>
-        </HomeScreen></>
+            <AuthorizationLayerWrapper>
+                <HomeScreen>
+                </HomeScreen>
+            </AuthorizationLayerWrapper>
+        </>
     );
 };
 

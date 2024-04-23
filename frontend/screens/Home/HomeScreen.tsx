@@ -16,7 +16,7 @@ const WelcomeScreen = () => {
 
     const handleRegisterAnimal = () => {
         router.navigate('/cadastrar-animal')
-        console.log('Register Animal button pressed');
+        console.log('UserRegister Animal button pressed');
     };
 
     const redirectToLogin = () => {
