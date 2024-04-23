@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import { TextInput, Button, Snackbar } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  Text,
+} from 'react-native';
+import {TextInput, Button, useTheme, Snackbar} from 'react-native-paper';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "@firebase/auth";
 import { FIREBASE_APP } from "@/config/config";
+import { FontAwesome } from '@expo/vector-icons';
+import {router} from "expo-router";
 
 const TelaDeAutenticacao = () => {
+  const { colors } = useTheme();
   const [nomeUsuario, setNomeUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [user, setUser] = useState(null); // Track user authentication state
@@ -15,7 +26,8 @@ const TelaDeAutenticacao = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+        // @ts-ignore
+        return setUser(user);
     });
 
     return () => unsubscribe();
@@ -23,23 +35,26 @@ const TelaDeAutenticacao = () => {
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, nomeUsuario, senha);
-      setSnackbarMessage('Usuário logado com sucesso!');
-      setSnackbarVisible(true);
+      await signInWithEmailAndPassword(auth, nomeUsuario, senha).then(
+          () => {
+            setSnackbarMessage('Usuário logado com sucesso!');
+            setSnackbarVisible(true);
+            router.navigate('home')
+          },
+          (error) => {
+            setSnackbarMessage('Ocorreu falha no login. Por favor, tente novamente.');
+            setSnackbarVisible(true);
+          }
+      );
     } catch (error) {
       setSnackbarMessage('Login ou senha incorretos');
       setSnackbarVisible(true);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setSnackbarMessage('Usuário deslogado com sucesso!');
-      setSnackbarVisible(true);
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error.message);
-    }
+  const handleSocialLogin = (social: string) => {
+    console.log(`Log in with ${social}`);
+    // Integrate with Firebase social authentication accordingly
   };
 
   return (
@@ -47,6 +62,7 @@ const TelaDeAutenticacao = () => {
         <KeyboardAvoidingView style={styles.keyboardAvoidingView} behavior={Platform.OS === "ios" ? "padding" : "height"}>
           <View style={styles.containerFormulario}>
             <TextInput
+                autoCapitalize="none"
                 label="Nome de usuário"
                 value={nomeUsuario}
                 onChangeText={setNomeUsuario}
@@ -71,9 +87,24 @@ const TelaDeAutenticacao = () => {
             />
           </View>
           <View style={styles.containerBotoes}>
-            <Button mode="contained" onPress={handleLogin} style={styles.botaoEntrar} aria-label="Botão de entrar">
+            <Button mode="contained" onPress={handleLogin} style={[styles.botao, styles.botaoEntrar]}>
               ENTRAR
             </Button>
+            <TouchableOpacity
+                onPress={() => handleSocialLogin('Facebook')}
+                style={[styles.botao, styles.botaoEntrarFacebook]}
+            >
+              <FontAwesome name="facebook" size={20} color={colors.surface} style={styles.iconLeft} />
+              <Text style={styles.buttonLabel}>ENTRAR COM FACEBOOK</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+                onPress={() => handleSocialLogin('Google')}
+                style={[styles.botao, styles.botaoEntrarGoogle]}
+            >
+              <FontAwesome name="google" size={20} color={colors.surface} style={styles.iconLeft} />
+              <Text style={styles.buttonLabel}>ENTRAR COM GOOGLE</Text>
+            </TouchableOpacity>
+            {/* ... Snackbar */}
           </View>
           <Snackbar
               visible={snackbarVisible}
@@ -91,37 +122,56 @@ const TelaDeAutenticacao = () => {
 const styles = StyleSheet.create({
   safeAreaView: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
   keyboardAvoidingView: {
     flex: 1,
   },
+  scrollViewContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   containerFormulario: {
-    paddingTop: '30%',
-    paddingBottom: '5%',
-    marginLeft: '10%',
-    marginRight: '10%',
+    marginHorizontal: '10%',
+    marginTop: '25%'
   },
   containerBotoes: {
-    paddingBottom: '30%',
-    marginLeft: '10%',
-    marginRight: '10%',
-    color: '#fafafa'
+    marginHorizontal: '10%',
+    marginTop: '5%',
   },
   input: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#d5cece'
+  },
+  botao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 5,
+    elevation: 3,
+    marginTop: 10,
   },
   botaoEntrar: {
-    width: '95%',
-    alignSelf: 'center',
-    marginBottom: '25%',
-    backgroundColor: '#88c9bf',
-    padding: 12
+    backgroundColor: '#95bb9f',
+    fontWeight: "bold"
   },
+  botaoEntrarFacebook: {
+    backgroundColor: '#3b5998',
+    marginTop: '20%'
+  },
+  botaoEntrarGoogle: {
+    backgroundColor: '#DB4437',
+  },
+  buttonLabel: {
+    fontSize: 14,
+    color: '#fff',
+    marginLeft: 10,
+    fontWeight: "bold"
+  },
+  iconLeft: {
+    marginRight: 10,
+  }
 });
 
 export default TelaDeAutenticacao;

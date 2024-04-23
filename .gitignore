@@ -1,3 +1,6 @@
+frontend/security/
+frontend/app.json
+
 # Logs
 logs
 *.log
@@ -131,3 +134,4 @@ dist
 
 .idea
 .DS_Store
+frontend/app.json
