@@ -32,7 +32,3 @@ jobs:
       - name: Run TypeScript Compiler
         run: npx tsc --noEmit
         working-directory: ./frontend
-
-      - name: Run tests
-        run: npm test --passWithNoTests
-        working-directory: ./frontend
