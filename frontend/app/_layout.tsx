@@ -35,6 +35,13 @@ export default function Layout() {
                     }}
                 />
                 <Drawer.Screen
+                    name="adotar"
+                    options={{
+                        drawerLabel: 'Adotar Pet',
+                        title: 'Adotar Pet',
+                    }}
+                />
+                <Drawer.Screen
                     name="usuario-nao-cadastrado"
                     options={{
                         drawerLabel : '',
