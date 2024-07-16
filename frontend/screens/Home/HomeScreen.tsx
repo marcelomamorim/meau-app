@@ -32,9 +32,6 @@ const WelcomeScreen = () => {
             <TouchableOpacity style={styles.button} onPress={handleAdopt}>
                 <Text style={styles.buttonText}>ADOTAR</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleHelp}>
-                <Text style={styles.buttonText}>AJUDAR</Text>
-            </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={handleRegisterAnimal}>
                 <Text style={styles.buttonText}>CADASTRAR ANIMAL</Text>
             </TouchableOpacity>
