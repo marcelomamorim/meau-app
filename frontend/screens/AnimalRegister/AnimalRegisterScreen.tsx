@@ -1,9 +1,9 @@
-import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
-
-import {AntDesign} from '@expo/vector-icons';
-import {db, FIREBASE_AUTH} from '@/config/config';
-import {doc, getDoc, setDoc} from 'firebase/firestore';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+import { AntDesign } from '@expo/vector-icons';
+import { db, FIREBASE_AUTH, storage } from '@/config/config';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 
 interface Animal {
@@ -17,12 +17,14 @@ interface Animal {
     saude: string[];
     necessidades: string[];
     objetos: string[];
+    imageUrl?: string;
 }
 
 const AnimalRegisterScreen = () => {
 
     const [currentObject, setCurrentObject] = useState('');
     const [objectsList, setObjectsList] = useState<string[]>([]);
+    const [imageUri, setImageUri] = useState<string | null>(null);
 
     const [dadosCadastraisDoAnimal, setDadosCadastraisDoAnimal] = useState<Animal>({
         nome: '',
@@ -46,7 +48,16 @@ const AnimalRegisterScreen = () => {
             console.log("No user is currently signed in or email is null.");
             return '';
         }
-    }
+    };
+
+    const uploadImageToStorage = async (uri: string, imageName: string) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `images/${imageName}`);
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
+    };
 
     const addPetToFirestore = async (animal: Animal) => {
         const userEmail = getUserEmail();
@@ -61,9 +72,15 @@ const AnimalRegisterScreen = () => {
         if (usuarioSnap.exists()) {
             try {
                 animal["responsavel"] = usuarioRef;
+                if (imageUri) {
+                    console.log('Uploading file to storage');
+                    const imageUrl = await uploadImageToStorage(imageUri, `${animal.nome}.jpg`);
+                    animal.imageUrl = imageUrl;
+                }
                 const newPetRef = doc(db, 'animais', animal.nome);
                 await setDoc(newPetRef, animal);
                 console.log('Pet added successfully:', animal);
+                Alert.alert('Sucesso', 'Animal registrado com sucesso!');
             } catch (error) {
                 console.error('Error adding pet to Firestore:', error);
                 throw error;
@@ -71,7 +88,7 @@ const AnimalRegisterScreen = () => {
         } else {
             console.error("User document does not exist in Firestore.");
         }
-    }
+    };
 
     const handleAddObject = () => {
         if (currentObject.trim() !== '') {
@@ -88,7 +105,7 @@ const AnimalRegisterScreen = () => {
         dadosCadastraisDoAnimal["objetos"] = updatedObjectsList
     };
 
-    const renderRadioButton = (label: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined, formField: string, value: string) => (
+    const renderRadioButton = (label: string, formField: string, value: string) => (
         <TouchableOpacity
             onPress={() => setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, [formField]: value })}
             style={styles.radioButton}
@@ -100,8 +117,7 @@ const AnimalRegisterScreen = () => {
         </TouchableOpacity>
     );
 
-
-    const renderCheckbox = (category: string, option: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => (
+    const renderCheckbox = (category: string, option: string) => (
         <TouchableOpacity
             onPress={() => handleCheckboxChange(category, option)}
             style={[
@@ -116,10 +132,10 @@ const AnimalRegisterScreen = () => {
         </TouchableOpacity>
     );
 
-    const handleCheckboxChange = (name: string, value: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => {
+    const handleCheckboxChange = (name: string, value: string) => {
         let updatedValues;
         if (dadosCadastraisDoAnimal[name].includes(value)) {
-            updatedValues = dadosCadastraisDoAnimal[name].filter((item: string | number | boolean | React.ReactElement<any, string | React.JSXElementConstructor<any>> | Iterable<React.ReactNode> | null | undefined) => item !== value);
+            updatedValues = dadosCadastraisDoAnimal[name].filter((item) => item !== value);
         } else {
             updatedValues = [...dadosCadastraisDoAnimal[name], value];
         }
@@ -149,7 +165,7 @@ const AnimalRegisterScreen = () => {
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Foto do Animal</Text>
-                        <ImagePickerComponent onImagePicked={() => console.log('compoenente funcionando')}></ImagePickerComponent>
+                        <ImagePickerComponent onImagePicked={(uri) => setImageUri(uri)} />
                     </View>
 
                     <Text style={styles.label}>Idade</Text>
@@ -425,4 +441,3 @@ const styles = StyleSheet.create({
 });
 
 export default AnimalRegisterScreen;
-

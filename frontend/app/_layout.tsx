@@ -42,6 +42,13 @@ export default function Layout() {
                     }}
                 />
                 <Drawer.Screen
+                    name="profile-animal"
+                    options={{
+                        drawerLabel: 'Perfil Animal',
+                        title: 'Perfil Animal',
+                    }}
+                />
+                <Drawer.Screen
                     name="usuario-nao-cadastrado"
                     options={{
                         drawerLabel : '',

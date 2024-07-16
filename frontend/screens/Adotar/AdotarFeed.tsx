@@ -1,56 +1,137 @@
-// AdotarFeed.tsx
-import React from 'react';
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapshot } from 'firebase/firestore';
+import { getDownloadURL, ref } from 'firebase/storage';
+import { db, storage } from '@/config/config';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const pets = [
-  {
-    id: '1',
-    name: 'Pequi',
-    gender: 'MACHO',
-    age: 'ADULTO',
-    size: 'MÉDIO',
-    location: 'SAMAMBAIA SUL - DISTRITO FEDERAL',
-    image: 'https://tudosobrecachorros.com.br/wp-content/uploads/american-bully-1.jpg',
-  },
-  {
-    id: '2',
-    name: 'Bidu',
-    gender: 'MACHO',
-    age: 'ADULTO',
-    size: 'MÉDIO',
-    location: 'SAMAMBAIA SUL - DISTRITO FEDERAL',
-    image: 'https://www.thesprucepets.com/thmb/7yH0zRjVxd6Zb0BfNc6f0pJnvac=/2338x0/filters:no_upscale():strip_icc()/cute-dog-breeds-we-can-t-get-enough-of-4589340-18-d7d08269a41249d180fd1e0a249c6fcb.jpg',
-  },
-  {
-    id: '3',
-    name: 'Alec',
-    gender: 'MACHO',
-    age: 'ADULTO',
-    size: 'MÉDIO',
-    location: 'SAMAMBAIA SUL - DISTRITO FEDERAL',
-    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTrEnoCklbl3CLcgejnzeA_94fduRCO_DtZxw&s',
-  },
-];
+interface Animal {
+  id: string;
+  nome: string;
+  sexo: string;
+  idade: string;
+  porte: string;
+  location: string;
+  imageUrl?: string;
+  especie: string;
+  temperamento: string[];
+  saude: string[];
+  necessidades: string[];
+  objetos: string[];
+}
 
 const AdotarFeed = () => {
-  const renderItem = ({ item }: { item: typeof pets[0] }) => (
-    <View style={styles.card}>
-      <Image source={{ uri: item.image }} style={styles.image} />
+  const [pets, setPets] = useState<Animal[]>([]);
+  const [lastVisible, setLastVisible] = useState<DocumentSnapshot | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [likedPets, setLikedPets] = useState<{ [key: string]: boolean }>({});
+
+  const navigation = useNavigation();
+
+  const callCount = useRef(0);
+  const callCountTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchPets = useCallback(async (isRefresh: boolean = false) => {
+    if (loading || callCount.current >= 3) return;
+
+    setLoading(true);
+    callCount.current += 1;
+
+    if (!callCountTimeout.current) {
+      callCountTimeout.current = setTimeout(() => {
+        callCount.current = 0;
+        callCountTimeout.current = null;
+      }, 10000); // Reset call count every 10 seconds
+    }
+
+    try {
+      const petsQuery = isRefresh
+        ? query(collection(db, 'animais'), orderBy('nome'), limit(3))
+        : query(collection(db, 'animais'), orderBy('nome'), limit(3), startAfter(lastVisible));
+
+      const querySnapshot = await getDocs(petsQuery);
+
+      if (!querySnapshot.empty) {
+        const newPets: Animal[] = [];
+        for (const docSnapshot of querySnapshot.docs) {
+          const petData = docSnapshot.data();
+
+          try {
+            const imageUrl = await getDownloadURL(ref(storage, `images/${petData.nome}.jpg`));
+            newPets.push({ ...petData, id: docSnapshot.id, imageUrl } as Animal);
+          } catch (imageError) {
+            console.error('Error fetching image for:', petData.nome, imageError);
+          }
+        }
+        setPets(isRefresh ? newPets : [...pets, ...newPets]);
+        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      } else if (isRefresh) {
+        setPets([]);
+      }
+    } catch (error) {
+      console.error('Error fetching pets:', error);
+    } finally {
+      setLoading(false);
+      if (isRefresh) setRefreshing(false);
+    }
+  }, [lastVisible, loading]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchInitialPets = async () => {
+        setLastVisible(null);
+        await fetchPets(true);
+      };
+      fetchInitialPets();
+    }, [fetchPets])
+  );
+
+  const handleHeartPress = (id: string) => {
+    setLikedPets((prevState) => ({
+      ...prevState,
+      [id]: !prevState[id]
+    }));
+  };
+
+  const handleAnimalPress = (animal: Animal) => {
+    navigation.navigate('profile-animal', { animal });
+  };
+
+  const renderItem = ({ item }: { item: Animal }) => (
+    <TouchableOpacity onPress={() => handleAnimalPress(item)} style={styles.card}>
+      <Image source={{ uri: item.imageUrl }} style={styles.image} />
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{item.name}</Text>
-        <TouchableOpacity style={styles.heartButton}>
-          <FontAwesome name="heart-o" size={24} color="black" />
+        <Text style={styles.name}>{item.nome}</Text>
+        <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartPress(item.id)}>
+          <FontAwesome
+            name={likedPets[item.id] ? "heart" : "heart-o"}
+            size={24}
+            color={likedPets[item.id] ? "red" : "black"}
+          />
         </TouchableOpacity>
       </View>
       <View style={styles.detailsContainer}>
-        <Text style={styles.detail}>{item.gender}</Text>
-        <Text style={styles.detail}>{item.age}</Text>
-        <Text style={styles.detail}>{item.size}</Text>
+        <Text style={styles.detail}>{item.sexo}</Text>
+        <Text style={styles.detail}>{item.idade}</Text>
+        <Text style={styles.detail}>{item.porte}</Text>
         <Text style={styles.location}>{item.location}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
+
+  const handleLoadMore = () => {
+    if (!loading && lastVisible) {
+      fetchPets();
+    }
+  };
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setLastVisible(null);
+    fetchPets(true);
+  };
 
   return (
     <FlatList
@@ -58,6 +139,11 @@ const AdotarFeed = () => {
       renderItem={renderItem}
       keyExtractor={item => item.id}
       contentContainerStyle={styles.list}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.5}
+      ListFooterComponent={loading ? <ActivityIndicator size="large" color="#0000ff" /> : null}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
     />
   );
 };
@@ -75,9 +161,8 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: undefined,
-    aspectRatio: 16 / 9, // Adjust the aspect ratio as needed
-    resizeMode: 'cover', // Ensures the image covers the area while maintaining aspect ratio
+    height: 200,
+    resizeMode: 'cover',
   },
   infoContainer: {
     flexDirection: 'row',
