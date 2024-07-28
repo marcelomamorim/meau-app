@@ -48,8 +48,8 @@ const AdotarFeed = () => {
 
     try {
       const petsQuery = isRefresh
-        ? query(collection(db, 'animais'), orderBy('nome'), limit(3))
-        : query(collection(db, 'animais'), orderBy('nome'), limit(3), startAfter(lastVisible));
+        ? query(collection(db, 'animais'), orderBy('nome'), limit(5))
+        : query(collection(db, 'animais'), orderBy('nome'), limit(5), startAfter(lastVisible));
 
       const querySnapshot = await getDocs(petsQuery);
 
@@ -59,6 +59,7 @@ const AdotarFeed = () => {
           const petData = docSnapshot.data();
 
           try {
+            console.log("nome : " + petData.nome)
             const imageUrl = await getDownloadURL(ref(storage, `images/${petData.nome}.jpg`));
             newPets.push({ ...petData, id: docSnapshot.id, imageUrl } as Animal);
           } catch (imageError) {

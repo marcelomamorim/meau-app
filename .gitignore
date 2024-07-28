@@ -1,5 +1,6 @@
 frontend/security/
 frontend/app.json
+frontend/config/
 
 # Logs
 logs
@@ -135,3 +136,4 @@ dist
 .idea
 .DS_Store
 frontend/app.json
+frontend/config/config.tsx
