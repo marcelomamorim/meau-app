@@ -1,6 +1,6 @@
 import React from 'react';
 
-import RegisterScreen from "@/screens/UserRegister/RegisterScreen";
+import RegisterScreen from "../screens/UserRegister/RegisterScreen";
 
 const CadastroPessoa = () => {
     return (

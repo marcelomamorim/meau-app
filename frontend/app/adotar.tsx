@@ -1,6 +1,6 @@
 import React from 'react';
-import AuthorizationLayerWrapper from "@/components/AuthorizationLayer";
-import AdotarFeed from '@/screens/Adotar/AdotarFeed';
+import AuthorizationLayerWrapper from "../components/AuthorizationLayer";
+import AdotarFeed from '../screens/Adotar/AdotarFeed';
 
 const Adotar = () => {
     return (

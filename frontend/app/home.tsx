@@ -1,7 +1,7 @@
 import React from 'react';
 
-import HomeScreen from "@/screens/Home/HomeScreen";
-import AuthorizationLayerWrapper from '@/components/AuthorizationLayer';
+import HomeScreen from "../screens/Home/HomeScreen";
+import AuthorizationLayerWrapper from '../components/AuthorizationLayer';
 
 const Home = () => {
     return (

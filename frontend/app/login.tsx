@@ -1,5 +1,5 @@
 import React from 'react';
-import AuthenticationScreen from "@/screens/Authentication/AuthenticationScreen";
+import AuthenticationScreen from "../screens/Authentication/AuthenticationScreen";
 
 
 const Login = () => {
