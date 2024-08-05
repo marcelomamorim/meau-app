@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import SplashScreen from "../screens/Splash/SplashScreen";
-import {FIREBASE_APP} from "@/config/config";
+import {FIREBASE_APP} from "../configuracao/config";
 import "firebase/firestore";
 
 

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import {createUserWithEmailAndPassword} from '@firebase/auth';
-import {db, FIREBASE_AUTH} from "@/config/config";
+import {db, FIREBASE_AUTH} from "@/configuracao/config";
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 import {router} from "expo-router";
 import axios from 'axios';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FIREBASE_AUTH } from "@/config/config";
+import { FIREBASE_AUTH } from "../configuracao/config";
 import { router } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 

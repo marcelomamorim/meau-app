@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
-import { db, FIREBASE_AUTH, storage } from '@/config/config';
+import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ImagePickerComponent from "@/components/ImagePickerComponent";

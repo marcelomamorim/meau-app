@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import {TextInput, Button, useTheme, Snackbar} from 'react-native-paper';
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "@firebase/auth";
-import { FIREBASE_APP } from "@/config/config";
+import { FIREBASE_APP } from "@/configuracao/config";
 import { FontAwesome } from '@expo/vector-icons';
 import {router} from "expo-router";
 

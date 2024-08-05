@@ -1,10 +1,8 @@
 module.exports = function(api) {
   api.cache(true);
-  console.log('Babel config loaded');
   return {
     presets: ['babel-preset-expo'],
     plugins: [
-      'react-native-reanimated/plugin',
       '@babel/plugin-transform-template-literals',
       [
         'module:react-native-dotenv',
@@ -16,17 +14,9 @@ module.exports = function(api) {
           safe: false,
           allowUndefined: true,
           verbose: false,
-        }
-      ],
-      [
-        'module-resolver',
-        {
-          root: ['./src'],
-          alias: {
-            '@': './src',
-          },
         },
       ],
+      'react-native-reanimated/plugin', // Mova para o final
     ],
   };
 };

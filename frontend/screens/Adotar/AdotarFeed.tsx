@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ActivityIndi
 import { FontAwesome } from '@expo/vector-icons';
 import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapshot } from 'firebase/firestore';
 import { getDownloadURL, ref } from 'firebase/storage';
-import { db, storage } from '@/config/config';
+import { db, storage } from '@/configuracao/config';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 interface Animal {
