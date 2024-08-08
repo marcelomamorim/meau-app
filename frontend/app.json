@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "meau-app",
-    "slug": "frontend",
+    "slug": "miau-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",
     "android": {
-      "package": "com.igorbastos.frontend",
+      "package": "com.igorbastos.miauapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -40,7 +40,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "39a6926e-d962-47c4-8254-40d2796a333d"
+        "projectId": "84085e6e-5d24-4c65-9424-c16f10f39f66"
       }
     }
   }

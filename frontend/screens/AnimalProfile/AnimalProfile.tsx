@@ -1,51 +1,76 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { db } from '@/configuracao/config';
+import { collection, doc } from 'firebase/firestore';
 
-const DetailedAnimalScreen = () => {
-  const route = useRoute();
+type Animal = {
+  id: string;
+  imageUrl: string;
+  nome: string;
+  sexo: string;
+  porte: string;
+  idade: string;
+  location: string;
+  temperamento: string[];
+  saude: string[];
+  necessidades: string[];
+  objetos: string[];
+  ownerId: string;
+};
+
+type DetailedAnimalScreenRouteProp = RouteProp<{ params: { animal: Animal } }, 'params'>;
+
+const DetailedAnimalScreen: React.FC = () => {
+  const route = useRoute<DetailedAnimalScreenRouteProp>();
+  const navigation = useNavigation();
   const { animal } = route.params;
 
+  const handleAdoptClick = () => {
+    const chatId = doc(collection(db, 'chats')).id;
+    navigation.navigate('ChatScreen', { chatId, animalId: animal.id, ownerId: animal.ownerId });
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Image source={{ uri: animal.imageUrl }} style={styles.image} />
-      <View style={styles.infoContainer}>
-        <Text style={styles.name}>{animal.nome}</Text>
-        <TouchableOpacity style={styles.heartButton}>
-          <FontAwesome name="heart-o" size={24} color="black" />
+      <ScrollView style={styles.container}>
+        <Image source={{ uri: animal.imageUrl }} style={styles.image} />
+        <View style={styles.infoContainer}>
+          <Text style={styles.name}>{animal.nome}</Text>
+          <TouchableOpacity style={styles.heartButton}>
+            <FontAwesome name="heart-o" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.label}>SEXO</Text>
+          <Text style={styles.detail}>{animal.sexo}</Text>
+
+          <Text style={styles.label}>PORTE</Text>
+          <Text style={styles.detail}>{animal.porte}</Text>
+
+          <Text style={styles.label}>IDADE</Text>
+          <Text style={styles.detail}>{animal.idade}</Text>
+
+          <Text style={styles.label}>LOCALIZAÇÃO</Text>
+          <Text style={styles.detail}>{animal.location}</Text>
+
+          <Text style={styles.label}>TEMPERAMENTO</Text>
+          <Text style={styles.detail}>{animal.temperamento.join(', ')}</Text>
+
+          <Text style={styles.label}>SAÚDE</Text>
+          <Text style={styles.detail}>{animal.saude.join(', ')}</Text>
+
+          <Text style={styles.label}>NECESSIDADES</Text>
+          <Text style={styles.detail}>{animal.necessidades.join(', ')}</Text>
+
+          <Text style={styles.label}>OBJETOS</Text>
+          <Text style={styles.detail}>{animal.objetos.join(', ')}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.adoptButton} onPress={handleAdoptClick}>
+          <Text style={styles.adoptButtonText}>PRETENDO ADOTAR</Text>
         </TouchableOpacity>
-      </View>
-      <View style={styles.detailsContainer}>
-        <Text style={styles.label}>SEXO</Text>
-        <Text style={styles.detail}>{animal.sexo}</Text>
-
-        <Text style={styles.label}>PORTE</Text>
-        <Text style={styles.detail}>{animal.porte}</Text>
-
-        <Text style={styles.label}>IDADE</Text>
-        <Text style={styles.detail}>{animal.idade}</Text>
-
-        <Text style={styles.label}>LOCALIZAÇÃO</Text>
-        <Text style={styles.detail}>{animal.location}</Text>
-
-        <Text style={styles.label}>TEMPERAMENTO</Text>
-        <Text style={styles.detail}>{animal.temperamento.join(', ')}</Text>
-
-        <Text style={styles.label}>SAÚDE</Text>
-        <Text style={styles.detail}>{animal.saude.join(', ')}</Text>
-
-        <Text style={styles.label}>NECESSIDADES</Text>
-        <Text style={styles.detail}>{animal.necessidades.join(', ')}</Text>
-
-        <Text style={styles.label}>OBJETOS</Text>
-        <Text style={styles.detail}>{animal.objetos.join(', ')}</Text>
-      </View>
-
-      <TouchableOpacity style={styles.adoptButton}>
-        <Text style={styles.adoptButtonText}>PRETENDO ADOTAR</Text>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
   );
 };
 
