@@ -51,15 +51,15 @@ export default function Layout() {
                 <Drawer.Screen
                     name="usuario-nao-cadastrado"
                     options={{
-                        drawerLabel : '',
+                        drawerLabel : 'Register',
 
                     }}
                 />
                 <Drawer.Screen
                     name="index"
                     options={{
-                        drawerLabel: '',
-                        title: '',
+                        drawerLabel: 'Início',
+                        title: 'Início',
                     }}
                 />
             </Drawer>

@@ -28,8 +28,9 @@ const DetailedAnimalScreen: React.FC = () => {
   const { animal } = route.params;
 
   const handleAdoptClick = () => {
-    const chatId = doc(collection(db, 'chats')).id;
-    navigation.navigate('ChatScreen', { chatId, animalId: animal.id, ownerId: animal.ownerId });
+    let chatData = { chatId: null, animalId: animal.id, ownerId: animal.ownerId };
+    console.log(chatData);
+    navigation.navigate('chat', chatData);
   };
 
   return (

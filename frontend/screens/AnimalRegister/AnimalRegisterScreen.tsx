@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
 import { AntDesign } from '@expo/vector-icons';
 import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 
@@ -18,10 +18,10 @@ interface Animal {
     necessidades: string[];
     objetos: string[];
     imageUrl?: string;
+    ownerId?: string;
 }
 
 const AnimalRegisterScreen = () => {
-
     const [currentObject, setCurrentObject] = useState('');
     const [objectsList, setObjectsList] = useState<string[]>([]);
     const [imageUri, setImageUri] = useState<string | null>(null);
@@ -60,6 +60,11 @@ const AnimalRegisterScreen = () => {
     };
 
     const addPetToFirestore = async (animal: Animal) => {
+        const user = FIREBASE_AUTH.currentUser;
+        if (!user) {
+            console.error("No authenticated user found.");
+            return;
+        }
         const userEmail = getUserEmail();
         if (!userEmail) {
             console.error("No user email available, cannot add pet.");
@@ -72,13 +77,14 @@ const AnimalRegisterScreen = () => {
         if (usuarioSnap.exists()) {
             try {
                 animal["responsavel"] = usuarioRef;
+                animal["ownerId"] = user.uid; // Add ownerId to the animal object
                 if (imageUri) {
                     console.log('Uploading file to storage');
                     const imageUrl = await uploadImageToStorage(imageUri, `${animal.nome}.jpg`);
                     animal.imageUrl = imageUrl;
                 }
-                const newPetRef = doc(db, 'animais', animal.nome);
-                await setDoc(newPetRef, animal);
+                const animaisRef = collection(db, 'animais');
+                await addDoc(animaisRef, animal); // Firestore will generate a random ID
                 console.log('Pet added successfully:', animal);
                 Alert.alert('Sucesso', 'Animal registrado com sucesso!');
             } catch (error) {
@@ -94,7 +100,7 @@ const AnimalRegisterScreen = () => {
         if (currentObject.trim() !== '') {
             const updatedObjectsList = [...objectsList, currentObject.trim()];
             setObjectsList(updatedObjectsList);
-            dadosCadastraisDoAnimal["objetos"] = updatedObjectsList;
+            setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, objetos: updatedObjectsList });
             setCurrentObject('');
         }
     };
@@ -102,7 +108,7 @@ const AnimalRegisterScreen = () => {
     const handleDeleteObject = (index: number) => {
         const updatedObjectsList = objectsList.filter((_, i) => i !== index);
         setObjectsList(updatedObjectsList);
-        dadosCadastraisDoAnimal["objetos"] = updatedObjectsList
+        setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, objetos: updatedObjectsList });
     };
 
     const renderRadioButton = (label: string, formField: string, value: string) => (
@@ -139,7 +145,7 @@ const AnimalRegisterScreen = () => {
         } else {
             updatedValues = [...dadosCadastraisDoAnimal[name], value];
         }
-        setDadosCadastraisDoAnimal({...dadosCadastraisDoAnimal, [name]: updatedValues});
+        setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, [name]: updatedValues });
     };
 
     const handleFinishRegister = () => {
@@ -147,7 +153,7 @@ const AnimalRegisterScreen = () => {
         addPetToFirestore(dadosCadastraisDoAnimal).then(r =>
             () => console.log(r),
             (error) => console.log(error)
-        )
+        );
     };
 
     return (
@@ -161,7 +167,7 @@ const AnimalRegisterScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Informações do Animal</Text>
                     <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome do animal"
-                               onChangeText={(text) => setDadosCadastraisDoAnimal({...dadosCadastraisDoAnimal, nome: text})} style={styles.input}/>
+                        onChangeText={(text) => setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, nome: text })} style={styles.input} />
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Foto do Animal</Text>
