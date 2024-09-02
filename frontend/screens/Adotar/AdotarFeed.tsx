@@ -5,6 +5,8 @@ import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapsho
 import { getDownloadURL, ref } from 'firebase/storage';
 import { db, storage } from '@/configuracao/config';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
+import * as SplashScreen from 'expo-splash-screen';
 
 interface Animal {
   id: string;
@@ -22,6 +24,11 @@ interface Animal {
 }
 
 const AdotarFeed = () => {
+  const [fontsLoaded] = useFonts({
+    Roboto_400Regular,
+    Roboto_700Bold,
+  });
+
   const [pets, setPets] = useState<Animal[]>([]);
   const [lastVisible, setLastVisible] = useState<DocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +141,10 @@ const AdotarFeed = () => {
     fetchPets(true);
   };
 
+  if (!fontsLoaded) {
+    return <ActivityIndicator size="large" color="#0000ff" />;
+  }
+
   return (
     <FlatList
       data={pets}
@@ -151,14 +162,19 @@ const AdotarFeed = () => {
 
 const styles = StyleSheet.create({
   list: {
-    padding: 10,
+    padding: 15,
+    backgroundColor: '#F3F3F3',
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 10,
     overflow: 'hidden',
-    marginBottom: 15,
-    elevation: 2,
+    marginBottom: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   image: {
     width: '100%',
@@ -168,27 +184,32 @@ const styles = StyleSheet.create({
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 10,
+    alignItems: 'center',
+    padding: 15,
     backgroundColor: '#FFD700',
   },
   name: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontFamily: 'Roboto_700Bold',
+    color: '#000',
   },
   heartButton: {
-    alignSelf: 'flex-end',
+    padding: 5,
   },
   detailsContainer: {
-    padding: 10,
+    padding: 15,
   },
   detail: {
-    fontSize: 14,
+    fontSize: 16,
+    fontFamily: 'Roboto_400Regular',
     color: '#555',
+    marginBottom: 5,
   },
   location: {
-    marginTop: 5,
-    fontSize: 14,
-    fontWeight: 'bold',
+    marginTop: 10,
+    fontSize: 16,
+    fontFamily: 'Roboto_700Bold',
+    color: '#0288D1',
   },
 });
 

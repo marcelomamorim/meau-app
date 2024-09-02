@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FIREBASE_AUTH } from "../configuracao/config";
 import { router } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
+import UnregisteredAccountScreen from '@/screens/UnregisteredAccount/UnregisteredAccountScreen';
 
 // @ts-ignore
 const AuthorizationLayerWrapper = ({ children }) => {
@@ -37,7 +38,11 @@ const AuthorizationLayerWrapper = ({ children }) => {
         return <>{children}</>;
     }
 
-    return null;
+    return (
+        <>
+        <UnregisteredAccountScreen>
+        </UnregisteredAccountScreen></>
+    );
 };
 
 export default AuthorizationLayerWrapper;

@@ -141,7 +141,7 @@ const AnimalRegisterScreen = () => {
     const handleCheckboxChange = (name: string, value: string) => {
         let updatedValues;
         if (dadosCadastraisDoAnimal[name].includes(value)) {
-            updatedValues = dadosCadastraisDoAnimal[name].filter((item) => item !== value);
+            updatedValues = dadosCadastraisDoAnimal[name].filter((item: string) => item !== value);
         } else {
             updatedValues = [...dadosCadastraisDoAnimal[name], value];
         }
