@@ -141,7 +141,7 @@ const AnimalRegisterScreen = () => {
     const handleCheckboxChange = (name: string, value: string) => {
         let updatedValues;
         if (dadosCadastraisDoAnimal[name].includes(value)) {
-            updatedValues = dadosCadastraisDoAnimal[name].filter((item) => item !== value);
+            updatedValues = dadosCadastraisDoAnimal[name].filter((item: string) => item !== value);
         } else {
             updatedValues = [...dadosCadastraisDoAnimal[name], value];
         }
@@ -151,7 +151,7 @@ const AnimalRegisterScreen = () => {
     const handleFinishRegister = () => {
         console.log(dadosCadastraisDoAnimal);
         addPetToFirestore(dadosCadastraisDoAnimal).then(r =>
-            () => console.log(r),
+                () => console.log(r),
             (error) => console.log(error)
         );
     };
@@ -167,7 +167,7 @@ const AnimalRegisterScreen = () => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Informações do Animal</Text>
                     <TextInput placeholderTextColor='#bdbdbd' placeholder="Nome do animal"
-                        onChangeText={(text) => setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, nome: text })} style={styles.input} />
+                               onChangeText={(text) => setDadosCadastraisDoAnimal({ ...dadosCadastraisDoAnimal, nome: text })} style={styles.input} />
 
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Foto do Animal</Text>

@@ -1,36 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { db } from '@/configuracao/config';
-import { collection, doc } from 'firebase/firestore';
+import { useRoute } from '@react-navigation/native';
+import { db, FIREBASE_AUTH } from '@/configuracao/config';
+import { collection, addDoc } from 'firebase/firestore';
 
-type Animal = {
-  id: string;
-  imageUrl: string;
-  nome: string;
-  sexo: string;
-  porte: string;
-  idade: string;
-  location: string;
-  temperamento: string[];
-  saude: string[];
-  necessidades: string[];
-  objetos: string[];
-  ownerId: string;
-};
-
-type DetailedAnimalScreenRouteProp = RouteProp<{ params: { animal: Animal } }, 'params'>;
-
-const DetailedAnimalScreen: React.FC = () => {
-  const route = useRoute<DetailedAnimalScreenRouteProp>();
-  const navigation = useNavigation();
+const DetailedAnimalScreen = () => {
+  const route = useRoute();
   const { animal } = route.params;
 
-  const handleAdoptClick = () => {
-    let chatData = { chatId: null, animalId: animal.id, ownerId: animal.ownerId };
-    console.log(chatData);
-    navigation.navigate('chat', chatData);
+  const handleAdoptPress = async () => {
+    try {
+      // Cria uma entrada na coleção "adoptionInterests" no Firestore
+      await addDoc(collection(db, 'adoptionInterests'), {
+        interestedUserId: FIREBASE_AUTH.currentUser?.uid,  // ID do usuário interessado (você pode obter isso do contexto ou estado global)
+        animalId: animal.id,         // ID do animal
+        ownerId: animal.ownerId,     // ID do dono do animal
+        timestamp: new Date().toISOString(), // Data e hora do interesse
+      });
+
+      // Mostra uma mensagem de confirmação para o usuário interessado
+      Alert.alert("Interesse registrado", "Seu interesse foi registrado, aguarde o contato com o dono do animal.");
+
+    } catch (error) {
+      console.error("Erro ao registrar interesse na adoção: ", error);
+      Alert.alert("Erro", "Não foi possível registrar seu interesse. Por favor, tente novamente.");
+    }
   };
 
   return (
@@ -68,7 +63,7 @@ const DetailedAnimalScreen: React.FC = () => {
           <Text style={styles.detail}>{animal.objetos.join(', ')}</Text>
         </View>
 
-        <TouchableOpacity style={styles.adoptButton} onPress={handleAdoptClick}>
+        <TouchableOpacity style={styles.adoptButton} onPress={handleAdoptPress}>
           <Text style={styles.adoptButtonText}>PRETENDO ADOTAR</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -82,15 +77,13 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 250,
-    resizeMode: 'cover',
+    height: 300,
   },
   infoContainer: {
+    padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#FFD700',
   },
   name: {
     fontSize: 24,
@@ -100,30 +93,30 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   detailsContainer: {
-    padding: 15,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   label: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FFD700',
     marginTop: 10,
   },
   detail: {
     fontSize: 16,
-    color: '#434343',
-    marginBottom: 10,
+    marginTop: 5,
   },
   adoptButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 15,
-    margin: 15,
-    borderRadius: 5,
+    backgroundColor: '#FF6347',
+    padding: 15,
     alignItems: 'center',
+    marginHorizontal: 20,
+    marginVertical: 20,
+    borderRadius: 5,
   },
   adoptButtonText: {
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
 });
 

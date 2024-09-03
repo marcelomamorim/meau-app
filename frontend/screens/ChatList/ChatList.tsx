@@ -10,6 +10,7 @@ interface Chat {
   ownerId: string;
   ownerName: string;
   participantIds: string[];
+  animalName: string; // Added animal name to display in the chat title
   createdAt: Date;
 }
 
@@ -21,7 +22,7 @@ const ChatList: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) {
-      setLoading(false); // Set loading to false if there's no current user
+      setLoading(false);
       return;
     }
 
@@ -40,6 +41,7 @@ const ChatList: React.FC = () => {
           ownerId: firebaseData.ownerId,
           ownerName: firebaseData.ownerName,
           participantIds: firebaseData.participantIds,
+          animalName: firebaseData.animalName || 'Unknown Animal', // Use animal name if available
           createdAt: firebaseData.createdAt ? firebaseData.createdAt.toDate() : new Date(),
         };
         return data;
@@ -53,38 +55,38 @@ const ChatList: React.FC = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFA500" />
-      </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FFA500" />
+        </View>
     );
   }
 
   const renderItem = ({ item }: { item: Chat }) => (
-    <TouchableOpacity
-      style={styles.chatItem}
-      onPress={() => navigation.navigate('chat', { chatId: item.id, animalId: item.animalId, ownerId: item.ownerId })}
-    >
-      <Text style={styles.chatTitle}>Chat with {item.ownerName}</Text>
-      <Text style={styles.chatSubtitle}>Animal ID: {item.animalId}</Text>
-    </TouchableOpacity>
+      <TouchableOpacity
+          style={styles.chatItem}
+          onPress={() => navigation.navigate('chat', { chatId: item.id, animalId: item.animalId, ownerId: item.ownerId })}
+      >
+        <Text style={styles.chatTitle}>{item.ownerId}</Text> {/* Display animal name */}
+        <Text style={styles.chatSubtitle}>Chat with {item.ownerName}</Text>
+      </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={chats}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={<Text style={styles.emptyText}>No chats available.</Text>}
-      />
-    </View>
+      <View style={styles.container}>
+        <FlatList
+            data={chats}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            ListEmptyComponent={<Text style={styles.emptyText}>No chats available.</Text>}
+        />
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#F3F3F3',
     padding: 16,
   },
   loadingContainer: {
@@ -93,22 +95,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chatItem: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFFFFF',
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 10,
+    borderRadius: 10,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
+    elevation: 3,
   },
   chatTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: 'Roboto_700Bold', // Use a bold font for the title
+    color: '#333',
+    marginBottom: 4,
   },
   chatSubtitle: {
     fontSize: 14,
+    fontFamily: 'Roboto_400Regular', // Use a regular font for the subtitle
     color: '#777',
   },
   emptyText: {
@@ -116,6 +121,7 @@ const styles = StyleSheet.create({
     color: '#777',
     fontSize: 16,
     marginTop: 20,
+    fontFamily: 'Roboto_400Regular',
   },
 });
 

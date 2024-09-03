@@ -26,8 +26,8 @@ const TelaDeAutenticacao = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-        // @ts-ignore
-        return setUser(user);
+      // @ts-ignore
+      return setUser(user);
     });
 
     return () => unsubscribe();
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   botaoEntrar: {
-    backgroundColor: '#95bb9f',
+    backgroundColor: '#88c9bf',
     fontWeight: "bold"
   },
   botaoEntrarFacebook: {
