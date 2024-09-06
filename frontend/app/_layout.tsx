@@ -1,9 +1,29 @@
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
+import { FIREBASE_AUTH } from "../configuracao/config"; // Importe o Firebase Auth
 import { MaterialIcons } from '@expo/vector-icons';
+import {router} from "expo-router";
 
 export default function Layout() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    useEffect(() => {
+        // Verifica se o usuário está logado
+        const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(user => {
+            setIsAuthenticated(!!user); // Atualiza o estado com base no login
+        });
+
+        return () => unsubscribe(); // Remove o listener quando o componente desmonta
+    }, []);
+    const handleLoginLogout = () => {
+        if (isAuthenticated) {
+            FIREBASE_AUTH.signOut(); // Faz o logout
+            setIsAuthenticated(false); // Atualiza o estado após o logout
+        } else {
+            router.navigate('/login'); // Navega para a tela de login
+        }
+    };
+
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
             <Drawer
@@ -50,11 +70,13 @@ export default function Layout() {
                 <Drawer.Screen
                     name="login"
                     options={{
-                        drawerLabel: 'Login',
-                        title: 'Login',
+                        drawerLabel: isAuthenticated ? 'Logout' : 'Login', // Muda o rótulo do botão
+                        title: isAuthenticated ? 'Logout' : 'Login',
                         drawerIcon: ({ color, size }) => (
-                            <MaterialIcons name="login" color={color} size={size} />
+                            <MaterialIcons name={isAuthenticated ? 'logout' : 'login'} color={color} size={size} />
                         ),
+                        // Adiciona a lógica de login/logout
+                        onPress: handleLoginLogout,
                     }}
                 />
                 <Drawer.Screen

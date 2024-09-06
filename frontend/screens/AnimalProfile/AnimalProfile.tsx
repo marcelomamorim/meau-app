@@ -3,11 +3,50 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Alert } fr
 import { FontAwesome } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
 import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const DetailedAnimalScreen = () => {
+
   const route = useRoute();
   const { animal } = route.params;
+
+  async function createChat(animal: { id: string; ownerId: string }) {
+
+    const currentUserUid = FIREBASE_AUTH.currentUser?.uid;
+    if (!currentUserUid) {
+      throw new Error("User not authenticated");
+    }
+
+    // Query to check if the chat already exists
+    const chatQuery = query(
+        collection(db, 'chats'),
+        where('participantIds', 'array-contains', currentUserUid)
+    );
+
+    const chatSnapshot = await getDocs(chatQuery);
+
+    // Filter the results to find if a chat with both participants exists
+    const existingChat = chatSnapshot.docs.find(doc => {
+      const participants = doc.data().participantIds;
+      return participants.includes(animal.ownerId) || participants.includes(currentUserUid);
+    });
+
+    if (existingChat) {
+      console.log('Chat already exists');
+      return; // Chat exists, so don't create a new one
+    }
+
+    // If chat doesn't exist, create a new one
+    await addDoc(collection(db, 'chats'), {
+      animalId: animal.id || '',
+      ownerId: animal.ownerId,
+      ownerName: '',
+      participantIds: [currentUserUid, animal.ownerId],
+      createdAt: serverTimestamp(),
+    });
+
+    console.log('New chat created');
+  }
 
   const handleAdoptPress = async () => {
     try {
@@ -18,6 +57,8 @@ const DetailedAnimalScreen = () => {
         ownerId: animal.ownerId,     // ID do dono do animal
         timestamp: new Date().toISOString(), // Data e hora do interesse
       });
+
+      createChat(animal);
 
       // Mostra uma mensagem de confirmação para o usuário interessado
       Alert.alert("Interesse registrado", "Seu interesse foi registrado, aguarde o contato com o dono do animal.");

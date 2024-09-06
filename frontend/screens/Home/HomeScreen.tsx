@@ -1,8 +1,9 @@
-import React, { useCallback } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
+import { FIREBASE_AUTH } from "@/configuracao/config"; // Adicione a importação do Firebase Auth
 
 const WelcomeScreen = () => {
 
@@ -10,6 +11,15 @@ const WelcomeScreen = () => {
         Roboto_400Regular,
         Roboto_700Bold,
     });
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    useEffect(() => {
+        // Verifica se o usuário está autenticado
+        const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(user => {
+            setIsAuthenticated(!!user); // Define como true se o usuário estiver logado
+        });
+
+        return () => unsubscribe(); // Remove o listener quando o componente desmontar
+    }, []);
 
     const onLayoutRootView = useCallback(async () => {
         if (fontsLoaded) {
@@ -37,7 +47,12 @@ const WelcomeScreen = () => {
     };
 
     const redirectToLogin = () => {
-        router.navigate('/login');
+        if (isAuthenticated) {
+            FIREBASE_AUTH.signOut(); // Faz logout se estiver logado
+            setIsAuthenticated(false);
+        } else {
+            router.navigate('/login'); // Navega para a página de login se não estiver logado
+        }
     };
 
     return (
@@ -57,7 +72,7 @@ const WelcomeScreen = () => {
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.loginButton} onPress={redirectToLogin}>
-                    <Text style={styles.loginText}>login</Text>
+                    <Text style={styles.loginText}>{isAuthenticated ? 'logout' : 'login'}</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
