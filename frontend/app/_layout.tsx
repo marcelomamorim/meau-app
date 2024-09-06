@@ -119,6 +119,16 @@ export default function Layout() {
                     }}
                 />
                 <Drawer.Screen
+                    name="perfil"
+                    options={{
+                        drawerLabel: 'Meu Perfil',
+                        title: 'Meu Perfil',
+                        drawerIcon: ({ color, size }) => (
+                            <MaterialIcons name="person" color={color} size={size} />
+                        ),
+                    }}
+                />
+                <Drawer.Screen
                     name="index"
                     options={{
                         drawerLabel: 'Início',

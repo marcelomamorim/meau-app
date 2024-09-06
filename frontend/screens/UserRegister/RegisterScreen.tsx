@@ -58,6 +58,7 @@ const RegistrationScreen = () => {
         }
     };
 
+
     const handleTextInputChange = (name: string, value: string) => {
         setDadosUsuarioCadastro(prevState => ({ ...prevState, [name]: value }));
     };
