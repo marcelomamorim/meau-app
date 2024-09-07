@@ -1,14 +1,17 @@
 import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import {createUserWithEmailAndPassword} from '@firebase/auth';
-import {db, FIREBASE_AUTH} from "@/configuracao/config";
+import {db, FIREBASE_AUTH, storage } from "@/configuracao/config";
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 import {router} from "expo-router";
 import axios from 'axios';
 import {addDoc, collection, doc, setDoc} from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 
 const RegistrationScreen = () => {
+
+    const [imageUri, setImageUri] = useState<string | null>(null);
 
     const [dadosUsuarioCadastro, setDadosUsuarioCadastro] = useState({
         nomeCompleto: '',
@@ -32,6 +35,7 @@ const RegistrationScreen = () => {
         endereco: '',
         telefone: '',
         nomeUsuario: '',
+        imageUrl: '',
         id: ''
     };
 
@@ -53,11 +57,16 @@ const RegistrationScreen = () => {
         }
     };
 
-    const addUserToFirestore = async (usuario, FIREBASE_AUTH : any) => {
+    const addUserToFirestore = async (usuario : any, FIREBASE_AUTH : any) => {
         try {
             
             usuario.id = FIREBASE_AUTH.currentUser.uid;
             const newUserRef = doc(db, 'usuarios', usuario["id"]);
+            if (imageUri) {
+                console.log('Uploading file to storage');
+                const imageUrl = await uploadImageToStorage(imageUri, `${usuario["id"]}.jpg`);
+                usuario.imageUrl = imageUrl;
+            }
             await setDoc(newUserRef, usuario); // This will create a document with the custom ID
             console.log('User added successfully with ID:', usuario["id"]);
         } catch (error) {
@@ -69,6 +78,15 @@ const RegistrationScreen = () => {
 
     const handleTextInputChange = (name: string, value: string) => {
         setDadosUsuarioCadastro(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const uploadImageToStorage = async (uri: string, imageName: string) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `images/${imageName}`);
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
     };
 
     const handleFinishRegister = async () => {
@@ -168,7 +186,7 @@ const RegistrationScreen = () => {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Foto de Perfil</Text>
-                <ImagePickerComponent onImagePicked={() => console.log('componente funcionando')}></ImagePickerComponent>
+                <ImagePickerComponent onImagePicked={(uri) => setImageUri(uri)} />
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}

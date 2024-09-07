@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc } from 'firebase/firestore';
+import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
+import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, addDoc, getDocs, setDoc, doc } from 'firebase/firestore';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 
 interface InterestedUser {
@@ -10,12 +11,16 @@ interface InterestedUser {
   nomeUsuario: string;
   userId: string;
   animalId: string;
+  profilePictureUrl: string | null;
 }
 
 const ChatList: React.FC = () => {
   const [interestedUsers, setInterestedUsers] = useState<InterestedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const currentUser = FIREBASE_AUTH.currentUser;
+
+  // Move useNavigation to the top level
+  const navigation = useNavigation();
 
   useEffect(() => {
     if (!currentUser) {
@@ -34,7 +39,6 @@ const ChatList: React.FC = () => {
 
       for (const docSnapshot of querySnapshot.docs) {
         const firebaseData = docSnapshot.data();
-
         const interestedUserId = firebaseData.interestedUserId;
         const animalId = firebaseData.animalId;
 
@@ -44,12 +48,21 @@ const ChatList: React.FC = () => {
         if (userDocSnapshot.exists()) {
           const userData = userDocSnapshot.data();
 
+          // Get profile picture URL from Firebase Storage
+          let profilePictureUrl: string | null = null;
+          try {
+            profilePictureUrl = await getDownloadURL(ref(storage, `images/${interestedUserId}.jpg`));
+          } catch (error) {
+            console.log('No profile picture found for user:', interestedUserId);
+          }
+
           const data: InterestedUser = {
             id: docSnapshot.id,
             nomeCompleto: userData.nomeCompleto || 'Unknown',
             nomeUsuario: userData.nomeUsuario || 'Unknown',
             userId: interestedUserId,
             animalId: animalId,
+            profilePictureUrl: profilePictureUrl,
           };
 
           interestedUsersData.push(data);
@@ -70,11 +83,40 @@ const ChatList: React.FC = () => {
   }, [currentUser]);
 
   const handleStartChat = async (userId: string, animalId: string) => {
-    const navigation = useNavigation();
     const chatId = `${currentUser?.uid}_${userId}_${animalId}`;
+    const ownerId = currentUser?.uid;
     console.log(`Starting chat with ID: ${chatId}`);
-
-    // Chat creation logic
+  
+    try {
+      // Reference the chat by its chatId
+      const chatDocRef = doc(db, 'chats', chatId);
+  
+      // Get the chat document to check if it exists
+      const chatSnapshot = await getDoc(chatDocRef);
+  
+      // If the chat already exists, navigate to the chat screen
+      if (chatSnapshot.exists()) {
+        console.log('Chat already exists');
+        navigation.navigate('chat', { chatId, animalId, ownerId });
+        return; // Stop the function here, since the chat already exists
+      }
+  
+      // If chat does not exist, create a new chat with the given chatId as the document ID
+      await setDoc(chatDocRef, {
+        ownerId: ownerId,
+        participantIds: [ownerId, userId],
+        animalId: animalId,
+        createdAt: new Date(),
+      });
+  
+      console.log(`Chat successfully started with ID: ${chatId}`);
+  
+      // Navigate to the chat screen, passing chatId, animalId, and ownerId as params
+      navigation.navigate('chat', { chatId, animalId, ownerId });
+  
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    }
   };
 
   const handleAccept = (userId: string) => {
@@ -101,9 +143,15 @@ const ChatList: React.FC = () => {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.userContainer}>
-            <View style={styles.userDetails}>
-              <Text style={styles.userName}>{item.nomeCompleto}</Text>
-              <Text style={styles.userUsername}>@{item.nomeUsuario}</Text>
+            <View style={styles.userInfo}>
+              <Image
+                source={item.profilePictureUrl ? { uri: item.profilePictureUrl } : { uri: 'https://via.placeholder.com/150' }}
+                style={styles.profilePicture}
+              />
+              <View style={styles.userDetails}>
+                <Text style={styles.userName}>{item.nomeCompleto}</Text>
+                <Text style={styles.userUsername}>@{item.nomeUsuario}</Text>
+              </View>
             </View>
             <View style={styles.buttonsContainer}>
               <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId)}>
@@ -150,8 +198,19 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 3,
   },
-  userDetails: {
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 16,
+  },
+  userDetails: {
+    flex: 1,
   },
   userName: {
     fontSize: 18,
@@ -164,12 +223,13 @@ const styles = StyleSheet.create({
   },
   buttonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     marginTop: 10,
   },
   button: {
+    flex: 1,
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    marginHorizontal: 5,
     borderRadius: 8,
   },
   rejectButton: {
@@ -185,6 +245,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });
 
