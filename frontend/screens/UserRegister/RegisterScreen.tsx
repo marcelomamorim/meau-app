@@ -5,13 +5,7 @@ import {db, FIREBASE_AUTH} from "@/configuracao/config";
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 import {router} from "expo-router";
 import axios from 'axios';
-import {doc, setDoc} from "firebase/firestore";
-
-const brazilianStates = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-];
+import {addDoc, collection, doc, setDoc} from "firebase/firestore";
 
 
 const RegistrationScreen = () => {
@@ -28,6 +22,18 @@ const RegistrationScreen = () => {
         senha: '',
         confirmacaoSenha: '',
     });
+
+    const dadosCadastrais  = {
+        nomeCompleto: '',
+        idade: '',
+        email: '',
+        estado: '',
+        cidade: '',
+        endereco: '',
+        telefone: '',
+        nomeUsuario: '',
+        id: ''
+    };
 
     const [error, setError] = useState('');
 
@@ -47,11 +53,13 @@ const RegistrationScreen = () => {
         }
     };
 
-    const addUserToFirestore = async (usuario : any) => {
+    const addUserToFirestore = async (usuario, FIREBASE_AUTH : any) => {
         try {
-            const newPetRef = doc(db, 'usuarios', dadosUsuarioCadastro["email"]);
-            await setDoc(newPetRef, usuario);
-            console.log('User added successfully:', usuario);
+            
+            usuario.id = FIREBASE_AUTH.currentUser.uid;
+            const newUserRef = doc(db, 'usuarios', usuario["id"]);
+            await setDoc(newUserRef, usuario); // This will create a document with the custom ID
+            console.log('User added successfully with ID:', usuario["id"]);
         } catch (error) {
             console.error('Error adding user to Firestore:', error);
             throw error;
@@ -77,15 +85,17 @@ const RegistrationScreen = () => {
         }
 
         try {
-            await createUserWithEmailAndPassword(FIREBASE_AUTH, dadosUsuarioCadastro.email, senha).then(
-                () => {
-                    addUserToFirestore(dadosUsuarioCadastro).then(
+            await createUserWithEmailAndPassword(FIREBASE_AUTH, dadosUsuarioCadastro.email, dadosUsuarioCadastro.senha).then(
+                async () => {
+                    // Map to dadosCadastrais before sending to Firestore
+                    const mappedDadosCadastrais = mapDadosUsuarioCadastroToDadosCadastrais(dadosUsuarioCadastro);
+                    await addUserToFirestore(mappedDadosCadastrais, FIREBASE_AUTH).then(
                         () => {
                             Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-                            router.navigate('login')
+                            router.navigate('login');
                         },
                         (error) => console.log(error)
-                    )
+                    );
                 },
                 (error) => console.log(error)
             );
@@ -94,6 +104,19 @@ const RegistrationScreen = () => {
         }
 
     };
+
+    const mapDadosUsuarioCadastroToDadosCadastrais = (dadosUsuarioCadastro : any) => {
+        return {
+            nomeCompleto: dadosUsuarioCadastro.nomeCompleto,
+            idade: dadosUsuarioCadastro.idade,
+            email: dadosUsuarioCadastro.email,
+            estado: dadosUsuarioCadastro.estado,
+            cidade: dadosUsuarioCadastro.cidade,
+            endereco: dadosUsuarioCadastro.endereco,
+            telefone: dadosUsuarioCadastro.telefone,
+            nomeUsuario: dadosUsuarioCadastro.nomeUsuario
+        };
+    };    
 
     return (
         <ScrollView style={styles.container}>

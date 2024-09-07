@@ -65,19 +65,14 @@ const AnimalRegisterScreen = () => {
             console.error("No authenticated user found.");
             return;
         }
-        const userEmail = getUserEmail();
-        if (!userEmail) {
-            console.error("No user email available, cannot add pet.");
-            return;
-        }
 
-        const usuarioRef = doc(db, "usuarios", userEmail);
+        const usuarioRef = doc(db, "usuarios", user.uid);
         const usuarioSnap = await getDoc(usuarioRef);
 
         if (usuarioSnap.exists()) {
             try {
                 animal["responsavel"] = usuarioRef;
-                animal["ownerId"] = user.uid; // Add ownerId to the animal object
+                animal["ownerId"] = user.uid;
                 if (imageUri) {
                     console.log('Uploading file to storage');
                     const imageUrl = await uploadImageToStorage(imageUri, `${animal.nome}.jpg`);

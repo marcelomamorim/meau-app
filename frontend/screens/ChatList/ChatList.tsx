@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
 interface InterestedUser {
   id: string;
-  userName: string;
+  nomeCompleto: string;
+  nomeUsuario: string;
   userId: string;
   animalId: string;
 }
@@ -18,44 +19,62 @@ const ChatList: React.FC = () => {
 
   useEffect(() => {
     if (!currentUser) {
+      console.log('No current user, stopping process.');
       setLoading(false);
       return;
     }
 
-    const interestedUsersRef = collection(db, 'interestedUsers');
-    const q = query(interestedUsersRef, where('animalOwnerId', '==', currentUser.uid));
+    const interestedUsersRef = collection(db, 'adoptionInterests');
+    const q = query(interestedUsersRef, where('ownerId', '==', currentUser.uid));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const interestedUsersFirestore = querySnapshot.docs.map((doc) => {
-        const firebaseData = doc.data();
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      console.log('Snapshot received, number of documents:', querySnapshot.size);
 
-        const data: InterestedUser = {
-          id: doc.id,
-          userName: firebaseData.userName,
-          userId: firebaseData.userId,
-          animalId: firebaseData.animalId
-        };
+      const interestedUsersData: InterestedUser[] = [];
 
-        return data;
-      });
-      setInterestedUsers(interestedUsersFirestore);
+      for (const docSnapshot of querySnapshot.docs) {
+        const firebaseData = docSnapshot.data();
+
+        const interestedUserId = firebaseData.interestedUserId;
+        const animalId = firebaseData.animalId;
+
+        const userDocRef = firestoreDoc(db, 'usuarios', interestedUserId);
+        const userDocSnapshot = await getDoc(userDocRef);
+
+        if (userDocSnapshot.exists()) {
+          const userData = userDocSnapshot.data();
+
+          const data: InterestedUser = {
+            id: docSnapshot.id,
+            nomeCompleto: userData.nomeCompleto || 'Unknown',
+            nomeUsuario: userData.nomeUsuario || 'Unknown',
+            userId: interestedUserId,
+            animalId: animalId,
+          };
+
+          interestedUsersData.push(data);
+        } else {
+          console.error('User document not found in usuarios collection:', interestedUserId);
+        }
+      }
+
+      setInterestedUsers(interestedUsersData);
       setLoading(false);
+    }, (error) => {
+      console.error('Error fetching data from Firestore:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, [currentUser]);
 
   const handleStartChat = async (userId: string, animalId: string) => {
     const navigation = useNavigation();
     const chatId = `${currentUser?.uid}_${userId}_${animalId}`;
-    await addDoc(collection(db, 'chats'), {
-      ownerId: currentUser?.uid,
-      participantIds: [currentUser?.uid, userId],
-      animalId: animalId,
-      createdAt: new Date(),
-    });
-    console.log(`Chat started with ID: ${chatId}`);
-    navigation.navigate('ChatScreen', { chatId });
+    console.log(`Starting chat with ID: ${chatId}`);
+
+    // Chat creation logic
   };
 
   const handleAccept = (userId: string) => {
@@ -67,55 +86,105 @@ const ChatList: React.FC = () => {
   };
 
   if (loading) {
-    return <ActivityIndicator />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#88c9bf" />
+        <Text style={styles.loadingText}>Carregando...</Text>
+      </View>
+    );
   }
 
   return (
-      <View style={styles.container}>
-        <FlatList
-            data={interestedUsers}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-                <View style={styles.userContainer}>
-                  <Text>{item.userName}</Text>
-                  <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.button} onPress={() => handleReject(item.userId)}>
-                      <Text>Recusar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => handleAccept(item.userId)}>
-                      <Text>Aceitar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => handleStartChat(item.userId, item.animalId)}>
-                      <Text>Começar Chat</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-            )}
-        />
-      </View>
+    <View style={styles.container}>
+      <FlatList
+        data={interestedUsers}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.userContainer}>
+            <View style={styles.userDetails}>
+              <Text style={styles.userName}>{item.nomeCompleto}</Text>
+              <Text style={styles.userUsername}>@{item.nomeUsuario}</Text>
+            </View>
+            <View style={styles.buttonsContainer}>
+              <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId)}>
+                <Text style={styles.buttonText}>Recusar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(item.userId)}>
+                <Text style={styles.buttonText}>Aceitar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.chatButton]} onPress={() => handleStartChat(item.userId, item.animalId)}>
+                <Text style={styles.buttonText}>Chat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
     padding: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
   userContainer: {
-    marginBottom: 16,
-    padding: 16,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  userDetails: {
+    marginBottom: 12,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  userUsername: {
+    fontSize: 14,
+    color: '#777',
   },
   buttonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 10,
   },
   button: {
-    padding: 8,
-    backgroundColor: '#ccc',
-    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+  },
+  rejectButton: {
+    backgroundColor: '#ff6b6b',
+  },
+  acceptButton: {
+    backgroundColor: '#4caf50',
+  },
+  chatButton: {
+    backgroundColor: '#88c9bf',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -110,15 +110,6 @@ export default function Layout() {
                     }}
                 />
                 <Drawer.Screen
-                    name="usuario-nao-cadastrado"
-                    options={{
-                        drawerLabel: 'Register',
-                        drawerIcon: ({ color, size }) => (
-                            <MaterialIcons name="person" color={color} size={size} />
-                        ),
-                    }}
-                />
-                <Drawer.Screen
                     name="perfil"
                     options={{
                         drawerLabel: 'Meu Perfil',
@@ -129,13 +120,32 @@ export default function Layout() {
                     }}
                 />
                 <Drawer.Screen
+                    name="meus-chats"
+                    options={{
+                        drawerLabel: 'Chats',
+                        title: 'Chats',
+                        drawerIcon: ({ color, size }) => (
+                            <MaterialIcons name="chat" color={color} size={size} />
+                        ),
+                    }}
+                />
+                <Drawer.Screen
+                    name="chat"
+                    options={{
+                        drawerLabel: ''
+                    }}
+                />
+                <Drawer.Screen
                     name="index"
                     options={{
-                        drawerLabel: 'Início',
-                        title: 'Início',
-                        drawerIcon: ({ color, size }) => (
-                            <MaterialIcons name="home" color={color} size={size} />
-                        ),
+                        drawerLabel: '',
+                        title: ''
+                    }}
+                />
+                <Drawer.Screen
+                    name="usuario-nao-cadastrado"
+                    options={{
+                        drawerLabel: ''
                     }}
                 />
             </Drawer>
