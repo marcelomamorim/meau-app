@@ -1,23 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 
-interface Chat {
+interface InterestedUser {
   id: string;
+  userName: string;
+  userId: string;
   animalId: string;
-  ownerId: string;
-  ownerName: string;
-  participantIds: string[];
-  animalName: string; // Added animal name to display in the chat title
-  createdAt: Date;
 }
 
 const ChatList: React.FC = () => {
-  const [chats, setChats] = useState<Chat[]>([]);
+  const [interestedUsers, setInterestedUsers] = useState<InterestedUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
   const currentUser = FIREBASE_AUTH.currentUser;
 
   useEffect(() => {
@@ -26,58 +22,75 @@ const ChatList: React.FC = () => {
       return;
     }
 
-    const chatsRef = collection(db, 'chats');
-    const q = query(chatsRef, where('participantIds', 'array-contains', currentUser.uid));
+    const interestedUsersRef = collection(db, 'interestedUsers');
+    const q = query(interestedUsersRef, where('animalOwnerId', '==', currentUser.uid));
 
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const chatsFirestore = querySnapshot.docs.map((doc) => {
+      const interestedUsersFirestore = querySnapshot.docs.map((doc) => {
         const firebaseData = doc.data();
 
-        console.log('Chat document:', firebaseData); // Debug print
-
-        const data: Chat = {
+        const data: InterestedUser = {
           id: doc.id,
-          animalId: firebaseData.animalId,
-          ownerId: firebaseData.ownerId,
-          ownerName: firebaseData.ownerName,
-          participantIds: firebaseData.participantIds,
-          animalName: firebaseData.animalName || 'Unknown Animal', // Use animal name if available
-          createdAt: firebaseData.createdAt ? firebaseData.createdAt.toDate() : new Date(),
+          userName: firebaseData.userName,
+          userId: firebaseData.userId,
+          animalId: firebaseData.animalId
         };
+
         return data;
       });
-      setChats(chatsFirestore);
+      setInterestedUsers(interestedUsersFirestore);
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [currentUser]);
 
-  if (loading) {
-    return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#FFA500" />
-        </View>
-    );
-  }
+  const handleStartChat = async (userId: string, animalId: string) => {
+    const navigation = useNavigation();
+    const chatId = `${currentUser?.uid}_${userId}_${animalId}`;
+    await addDoc(collection(db, 'chats'), {
+      ownerId: currentUser?.uid,
+      participantIds: [currentUser?.uid, userId],
+      animalId: animalId,
+      createdAt: new Date(),
+    });
+    console.log(`Chat started with ID: ${chatId}`);
+    navigation.navigate('ChatScreen', { chatId });
+  };
 
-  const renderItem = ({ item }: { item: Chat }) => (
-      <TouchableOpacity
-          style={styles.chatItem}
-          onPress={() => navigation.navigate('chat', { chatId: item.id, animalId: item.animalId, ownerId: item.ownerId })}
-      >
-        <Text style={styles.chatTitle}>{item.ownerId}</Text> {/* Display animal name */}
-        <Text style={styles.chatSubtitle}>Chat with {item.ownerName}</Text>
-      </TouchableOpacity>
-  );
+  const handleAccept = (userId: string) => {
+    console.log(`User ${userId} accepted`);
+  };
+
+  const handleReject = (userId: string) => {
+    console.log(`User ${userId} rejected`);
+  };
+
+  if (loading) {
+    return <ActivityIndicator />;
+  }
 
   return (
       <View style={styles.container}>
         <FlatList
-            data={chats}
-            renderItem={renderItem}
+            data={interestedUsers}
             keyExtractor={(item) => item.id}
-            ListEmptyComponent={<Text style={styles.emptyText}>No chats available.</Text>}
+            renderItem={({ item }) => (
+                <View style={styles.userContainer}>
+                  <Text>{item.userName}</Text>
+                  <View style={styles.buttonsContainer}>
+                    <TouchableOpacity style={styles.button} onPress={() => handleReject(item.userId)}>
+                      <Text>Recusar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => handleAccept(item.userId)}>
+                      <Text>Aceitar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => handleStartChat(item.userId, item.animalId)}>
+                      <Text>Começar Chat</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+            )}
         />
       </View>
   );
@@ -86,42 +99,23 @@ const ChatList: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F3F3',
     padding: 16,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chatItem: {
-    backgroundColor: '#FFFFFF',
+  userContainer: {
+    marginBottom: 16,
     padding: 16,
-    borderRadius: 10,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-    elevation: 3,
+    backgroundColor: '#fff',
+    borderRadius: 8,
   },
-  chatTitle: {
-    fontSize: 18,
-    fontFamily: 'Roboto_700Bold', // Use a bold font for the title
-    color: '#333',
-    marginBottom: 4,
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
   },
-  chatSubtitle: {
-    fontSize: 14,
-    fontFamily: 'Roboto_400Regular', // Use a regular font for the subtitle
-    color: '#777',
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#777',
-    fontSize: 16,
-    marginTop: 20,
-    fontFamily: 'Roboto_400Regular',
+  button: {
+    padding: 8,
+    backgroundColor: '#ccc',
+    borderRadius: 4,
   },
 });
 
