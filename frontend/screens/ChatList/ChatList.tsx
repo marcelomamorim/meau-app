@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
-import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, addDoc, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, addDoc, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -123,18 +123,67 @@ const ChatList: React.FC = () => {
     console.log(`User ${userId} accepted`);
   };
 
-  const handleReject = (userId: string) => {
-    console.log(`User ${userId} rejected`);
-  };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#88c9bf" />
-        <Text style={styles.loadingText}>Carregando...</Text>
-      </View>
-    );
-  }
+  const handleReject = async (userId: string, animalId: string) => {
+    // Check if currentUser, userId, and animalId are defined
+    if (!currentUser?.uid) {
+      console.error('Error: currentUser is undefined.');
+      return;
+    }
+    if (!userId) {
+      console.error('Error: userId is undefined.');
+      return;
+    }
+    if (!animalId) {
+      console.error('Error: animalId is undefined.');
+      return;
+    }
+  
+    console.log(`User ${userId} rejected`);
+  
+    try {
+      // 1. Delete the chat document
+      const chatsRef = collection(db, 'chats');
+      const chatQuery = query(
+        chatsRef,
+        where('ownerId', '==', currentUser.uid),
+        where('participantIds', 'array-contains', userId),
+        where('animalId', '==', animalId)
+      );
+  
+      const chatSnapshot = await getDocs(chatQuery);
+  
+      if (!chatSnapshot.empty) {
+        const chatDoc = chatSnapshot.docs[0]; // Assuming there's only one chat document
+        await deleteDoc(chatDoc.ref); // Delete the chat document
+        console.log(`Chat with ID: ${chatDoc.id} deleted successfully.`);
+      } else {
+        console.log('No chat found for this user and animal.');
+      }
+  
+      // 2. Delete the adoption interest document
+      const adoptionInterestsRef = collection(db, 'adoptionInterests');
+      const interestQuery = query(
+        adoptionInterestsRef,
+        where('ownerId', '==', currentUser.uid),
+        where('interestedUserId', '==', userId),
+        where('animalId', '==', animalId)
+      );
+  
+      const interestSnapshot = await getDocs(interestQuery);
+  
+      if (!interestSnapshot.empty) {
+        const interestDoc = interestSnapshot.docs[0]; // Assuming only one adoption interest document
+        await deleteDoc(interestDoc.ref); // Delete the adoption interest document
+        console.log(`Adoption interest with ID: ${interestDoc.id} deleted successfully.`);
+      } else {
+        console.log('No adoption interest found for this user and animal.');
+      }
+  
+    } catch (error) {
+      console.error('Error deleting chat or adoption interest:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -154,7 +203,7 @@ const ChatList: React.FC = () => {
               </View>
             </View>
             <View style={styles.buttonsContainer}>
-              <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId)}>
+              <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId, item.animalId)}>
                 <Text style={styles.buttonText}>Recusar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(item.userId)}>
