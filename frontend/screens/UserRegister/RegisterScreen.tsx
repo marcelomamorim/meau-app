@@ -1,20 +1,17 @@
 import React, {useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import {createUserWithEmailAndPassword} from '@firebase/auth';
-import {db, FIREBASE_AUTH} from "@/configuracao/config";
+import {db, FIREBASE_AUTH, storage } from "@/configuracao/config";
 import ImagePickerComponent from "@/components/ImagePickerComponent";
 import {router} from "expo-router";
 import axios from 'axios';
-import {doc, setDoc} from "firebase/firestore";
-
-const brazilianStates = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-];
+import {addDoc, collection, doc, setDoc} from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 
 const RegistrationScreen = () => {
+
+    const [imageUri, setImageUri] = useState<string | null>(null);
 
     const [dadosUsuarioCadastro, setDadosUsuarioCadastro] = useState({
         nomeCompleto: '',
@@ -28,6 +25,19 @@ const RegistrationScreen = () => {
         senha: '',
         confirmacaoSenha: '',
     });
+
+    const dadosCadastrais  = {
+        nomeCompleto: '',
+        idade: '',
+        email: '',
+        estado: '',
+        cidade: '',
+        endereco: '',
+        telefone: '',
+        nomeUsuario: '',
+        imageUrl: '',
+        id: ''
+    };
 
     const [error, setError] = useState('');
 
@@ -47,11 +57,18 @@ const RegistrationScreen = () => {
         }
     };
 
-    const addUserToFirestore = async (usuario : any) => {
+    const addUserToFirestore = async (usuario : any, FIREBASE_AUTH : any) => {
         try {
-            const newPetRef = doc(db, 'usuarios', dadosUsuarioCadastro["email"]);
-            await setDoc(newPetRef, usuario);
-            console.log('User added successfully:', usuario);
+
+            usuario.id = FIREBASE_AUTH.currentUser.uid;
+            const newUserRef = doc(db, 'usuarios', usuario["id"]);
+            if (imageUri) {
+                console.log('Uploading file to storage');
+                const imageUrl = await uploadImageToStorage(imageUri, `${usuario["id"]}.jpg`);
+                usuario.imageUrl = imageUrl;
+            }
+            await setDoc(newUserRef, usuario); // This will create a document with the custom ID
+            console.log('User added successfully with ID:', usuario["id"]);
         } catch (error) {
             console.error('Error adding user to Firestore:', error);
             throw error;
@@ -61,6 +78,15 @@ const RegistrationScreen = () => {
 
     const handleTextInputChange = (name: string, value: string) => {
         setDadosUsuarioCadastro(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const uploadImageToStorage = async (uri: string, imageName: string) => {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const storageRef = ref(storage, `images/${imageName}`);
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
     };
 
     const handleFinishRegister = async () => {
@@ -77,15 +103,17 @@ const RegistrationScreen = () => {
         }
 
         try {
-            await createUserWithEmailAndPassword(FIREBASE_AUTH, dadosUsuarioCadastro.email, senha).then(
-                () => {
-                    addUserToFirestore(dadosUsuarioCadastro).then(
+            await createUserWithEmailAndPassword(FIREBASE_AUTH, dadosUsuarioCadastro.email, dadosUsuarioCadastro.senha).then(
+                async () => {
+                    // Map to dadosCadastrais before sending to Firestore
+                    const mappedDadosCadastrais = mapDadosUsuarioCadastroToDadosCadastrais(dadosUsuarioCadastro);
+                    await addUserToFirestore(mappedDadosCadastrais, FIREBASE_AUTH).then(
                         () => {
                             Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-                            router.navigate('login')
+                            router.navigate('login');
                         },
                         (error) => console.log(error)
-                    )
+                    );
                 },
                 (error) => console.log(error)
             );
@@ -93,6 +121,19 @@ const RegistrationScreen = () => {
             setError('Erro ao criar usuário. Por favor, tente novamente.');
         }
 
+    };
+
+    const mapDadosUsuarioCadastroToDadosCadastrais = (dadosUsuarioCadastro : any) => {
+        return {
+            nomeCompleto: dadosUsuarioCadastro.nomeCompleto,
+            idade: dadosUsuarioCadastro.idade,
+            email: dadosUsuarioCadastro.email,
+            estado: dadosUsuarioCadastro.estado,
+            cidade: dadosUsuarioCadastro.cidade,
+            endereco: dadosUsuarioCadastro.endereco,
+            telefone: dadosUsuarioCadastro.telefone,
+            nomeUsuario: dadosUsuarioCadastro.nomeUsuario
+        };
     };
 
     return (
@@ -145,7 +186,7 @@ const RegistrationScreen = () => {
 
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Foto de Perfil</Text>
-                <ImagePickerComponent onImagePicked={() => console.log('componente funcionando')}></ImagePickerComponent>
+                <ImagePickerComponent onImagePicked={(uri) => setImageUri(uri)} />
             </View>
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
