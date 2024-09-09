@@ -4,6 +4,8 @@ import { FontAwesome } from '@expo/vector-icons';
 import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapshot } from 'firebase/firestore';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { db, storage } from '@/configuracao/config';
+import { getAuth } from 'firebase/auth';  // Importando Firebase Auth
+import { sendAdoptionNotification } from '@/utils/notificationService';  // Importando serviço de notificação
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
@@ -96,11 +98,24 @@ const AdotarFeed = () => {
       }, [fetchPets])
   );
 
-  const handleHeartPress = (id: string) => {
+  // Função para lidar com o clique no coração (curtir/adotar)
+  const handleHeartPress = async (animal: Animal) => {
     setLikedPets((prevState) => ({
       ...prevState,
-      [id]: !prevState[id]
+      [animal.id]: !prevState[animal.id]
     }));
+
+    try {
+      const auth = getAuth();  // Obtém a instância de autenticação do Firebase
+      const userId = auth.currentUser?.uid;  // Pega o ID do usuário logado
+
+      if (userId && !likedPets[animal.id]) {
+        // O usuário curtiu o animal, então envia a notificação
+        await sendAdoptionNotification(animal.id, userId);  // Passa o ID do usuário logado
+      }
+    } catch (error) {
+      console.error('Erro ao enviar notificação:', error);
+    }
   };
 
   const handleAnimalPress = (animal: Animal) => {
@@ -112,7 +127,7 @@ const AdotarFeed = () => {
         <Image source={{ uri: item.imageUrl }} style={styles.image} />
         <View style={styles.infoContainer}>
           <Text style={styles.name}>{item.nome}</Text>
-          <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartPress(item.id)}>
+          <TouchableOpacity style={styles.heartButton} onPress={() => handleHeartPress(item)}>
             <FontAwesome
                 name={likedPets[item.id] ? "heart" : "heart-o"}
                 size={24}

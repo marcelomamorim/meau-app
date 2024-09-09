@@ -1,24 +1,23 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import * as SplashScreen from 'expo-splash-screen';
 import { router } from 'expo-router';
-import { FIREBASE_AUTH } from "@/configuracao/config"; // Adicione a importação do Firebase Auth
+import { FIREBASE_AUTH } from '@/configuracao/config';
 
 const WelcomeScreen = () => {
-
     const [fontsLoaded] = useFonts({
         Roboto_400Regular,
         Roboto_700Bold,
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+
     useEffect(() => {
-        // Verifica se o usuário está autenticado
-        const unsubscribe = FIREBASE_AUTH.onAuthStateChanged(user => {
-            setIsAuthenticated(!!user); // Define como true se o usuário estiver logado
+        const unsubscribe = FIREBASE_AUTH.onAuthStateChanged((user) => {
+            setIsAuthenticated(!!user);
         });
 
-        return () => unsubscribe(); // Remove o listener quando o componente desmontar
+        return () => unsubscribe();
     }, []);
 
     const onLayoutRootView = useCallback(async () => {
@@ -48,17 +47,24 @@ const WelcomeScreen = () => {
 
     const redirectToLogin = () => {
         if (isAuthenticated) {
-            FIREBASE_AUTH.signOut(); // Faz logout se estiver logado
+            FIREBASE_AUTH.signOut();
             setIsAuthenticated(false);
         } else {
-            router.navigate('/login'); // Navega para a página de login se não estiver logado
+            router.navigate('/login');
         }
     };
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.content}>
-                <Text style={styles.heading}>Olá!</Text>
+                {/* Animal Image */}
+                <Image
+                    source={{
+                        uri: 'https://files.oaiusercontent.com/file-ZNqn9p6KgwGMHNGMB7rscRB0?se=2024-09-08T04%3A01%3A29Z&sp=r&sv=2024-08-04&sr=b&rscc=max-age%3D604800%2C%20immutable%2C%20private&rscd=attachment%3B%20filename%3Dbf4650d0-69c1-4c93-aca7-590374224bd1.webp&sig=sU8MqTizGMUBVa0dTFdF%2BUpYIzPF/ZlvtgLhRBw/SEw%3D',
+                    }}
+                    style={styles.image}
+                />
+                {/* Welcome Text */}
                 <Text style={styles.description}>
                     Bem vindo ao Meau! Aqui você pode adotar, doar e ajudar cães e gatos com facilidade. Qual o seu interesse?
                 </Text>
@@ -71,7 +77,7 @@ const WelcomeScreen = () => {
                     <Text style={styles.buttonText}>cadastrar animal</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.loginButton} onPress={redirectToLogin}>
+                <TouchableOpacity style={styles.logoutButton} onPress={redirectToLogin}>
                     <Text style={styles.loginText}>{isAuthenticated ? 'logout' : 'login'}</Text>
                 </TouchableOpacity>
             </View>
@@ -84,28 +90,29 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         paddingHorizontal: 20,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#F0F0F0',
     },
     content: {
         alignItems: 'center',
         marginTop: 50,
     },
-    heading: {
-        fontSize: 36,
-        fontFamily: 'Roboto_700Bold',
-        color: '#000',
-        marginVertical: 20,
+    image: {
+        width: 250,
+        height: 250,
+        borderRadius: 125,
+        marginBottom: 30,
+        resizeMode: 'cover',
     },
     description: {
         fontSize: 18,
         fontFamily: 'Roboto_400Regular',
-        color: '#000',
+        color: '#333',
         textAlign: 'center',
         marginHorizontal: 30,
         marginBottom: 50,
     },
     button: {
-        backgroundColor: '#FFD700',
+        backgroundColor: '#E0C261',
         paddingVertical: 15,
         paddingHorizontal: 30,
         marginVertical: 20,
@@ -125,12 +132,42 @@ const styles = StyleSheet.create({
     },
     loginButton: {
         marginTop: 40,
+        backgroundColor: '#4CAF50', // Soft green for login
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        width: '60%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.22,
+        shadowRadius: 2.22,
+        elevation: 3,
     },
     loginText: {
         fontSize: 18,
         fontFamily: 'Roboto_700Bold',
-        color: '#000',
-        textDecorationLine: 'underline',
+        color: '#fff',
+        textAlign: 'center',
+        textDecorationLine: 'none',
+    },
+    logoutButton: {
+        marginTop: 15,
+        backgroundColor: 'lightgray', // Dark gray for logout
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 30,
+        width: '60%',
+        shadowColor: '#222',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 4,
+    },
+    logoutText: {
+        fontSize: 18,
+        fontFamily: 'Roboto_700Bold',
+        color: '#ffffff',
+        textAlign: 'center',
     },
 });
 

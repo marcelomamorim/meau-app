@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GiftedChat, IMessage, Bubble, InputToolbar } from 'react-native-gifted-chat';
 import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, doc, query, orderBy, onSnapshot, addDoc, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
-import { useRoute, RouteProp } from '@react-navigation/native';
-import { View, StyleSheet, Platform, KeyboardAvoidingView, Text } from 'react-native';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
+import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 type ChatParams = {
     chatId: string | null;
@@ -15,10 +16,11 @@ type ChatScreenRouteProp = RouteProp<{ params: ChatParams }, 'params'>;
 
 const ChatScreen: React.FC = () => {
     const route = useRoute<ChatScreenRouteProp>();
-    let { chatId, animalId, ownerId } = route.params;
+    const { chatId, animalId, ownerId } = route.params;
+    const navigation = useNavigation();
 
     const currentUser = FIREBASE_AUTH.currentUser;
-    if (!currentUser || !ownerId) {
+    if (!currentUser || !ownerId || !chatId) {
         return (
             <View style={styles.container}>
                 <Text>Informações insuficientes para iniciar o chat.</Text>
@@ -27,101 +29,72 @@ const ChatScreen: React.FC = () => {
     }
 
     const [messages, setMessages] = useState<IMessage[]>([]);
-    const [initializedChatId, setInitializedChatId] = useState<string | null>(chatId);
 
     useEffect(() => {
-        const initializeChat = async () => {
-            let newChatId = initializedChatId;
+        const messagesRef = collection(db, 'chats', chatId, 'messages');
+        const q = query(messagesRef, orderBy('timestamp', 'desc'));
 
-            if (!newChatId) {
-                const chatRef = await addDoc(collection(db, 'chats'), {
-                    animalId: animalId || '',
-                    ownerId: ownerId,
-                    ownerName: '',
-                    participantIds: [currentUser.uid, ownerId],
-                    createdAt: serverTimestamp(),
-                });
-                newChatId = chatRef.id;
-                setInitializedChatId(newChatId);
-                console.log("Chat created with ID:", newChatId);
-            } else {
-                const chatRef = doc(db, 'chats', newChatId);
-                const chatSnap = await getDoc(chatRef);
-                if (chatSnap.exists()) {
-                    const data = chatSnap.data();
-                    const participants = data.participantIds || [];
-                    const newParticipants = new Set(participants);
-                    newParticipants.add(currentUser.uid);
-                    newParticipants.add(ownerId);
-
-                    if (newParticipants.size !== participants.length) {
-                        const updatedData = {
-                            participantIds: Array.from(newParticipants),
-                        };
-                        console.log("Updating chat participants:", updatedData);
-                        await updateDoc(chatRef, updatedData);
-                    }
-                } else {
-                    console.error("Chat document does not exist!");
-                }
-            }
-
-            const messagesRef = collection(db, 'chats', newChatId, 'messages');
-            const q = query(messagesRef, orderBy('timestamp', 'desc'));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
-                const messagesFirestore = querySnapshot.docs.map((doc) => {
-                    const firebaseData = doc.data();
-
-                    const data: IMessage = {
-                        _id: doc.id,
-                        text: firebaseData.text,
-                        createdAt: firebaseData.timestamp ? firebaseData.timestamp.toDate() : new Date(),
-                        user: {
-                            _id: firebaseData.senderId,
-                            name: firebaseData.senderName,
-                        },
-                    };
-                    return data;
-                });
-                setMessages(messagesFirestore);
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const messagesFirestore = querySnapshot.docs.map((doc) => {
+                const firebaseData = doc.data();
+                const data: IMessage = {
+                    _id: doc.id,
+                    text: firebaseData.text,
+                    createdAt: firebaseData.timestamp ? firebaseData.timestamp.toDate() : new Date(),
+                    user: {
+                        _id: firebaseData.senderId,
+                        name: firebaseData.senderName,
+                    },
+                };
+                return data;
             });
+            setMessages(messagesFirestore);
+        });
 
-            return () => unsubscribe();
-        };
-
-        initializeChat();
-    }, [initializedChatId]);
+        return () => unsubscribe();
+    }, [chatId]);
 
     const onSend = useCallback((messages: IMessage[] = []) => {
-        if (!initializedChatId) return;
         const { text } = messages[0];
-        const messagesRef = collection(db, 'chats', initializedChatId, 'messages');
+        const messagesRef = collection(db, 'chats', chatId, 'messages');
         addDoc(messagesRef, {
             text,
             timestamp: serverTimestamp(),
             senderId: currentUser.uid,
             senderName: currentUser.displayName || 'User',
         });
-    }, [initializedChatId]);
+    }, [chatId]);
 
     const renderBubble = (props: any) => (
         <Bubble
             {...props}
             wrapperStyle={{
                 right: {
-                    backgroundColor: '#FFD700', // Custom bubble color for the current user
+                    backgroundColor: '#66CDAA', // Green color for sent messages
+                    borderRadius: 20,
+                    padding: 8,
                 },
                 left: {
-                    backgroundColor: '#ECECEC', // Custom bubble color for other users
+                    backgroundColor: '#F0F0F0', // Gray color for received messages
+                    borderRadius: 20,
+                    padding: 8,
                 },
             }}
             textStyle={{
                 right: {
-                    color: '#000', // Text color for current user
+                    color: '#fff', // White text for sent messages
                 },
                 left: {
-                    color: '#000', // Text color for other users
+                    color: '#333', // Dark text for received messages
                 },
+            }}
+            containerToNextStyle={{
+                right: { marginBottom: 7 }, // Space between consecutive sent messages
+                left: { marginBottom: 7 },  // Space between consecutive received messages
+            }}
+            containerToPreviousStyle={{
+                right: { marginTop: 7 },   // Space between messages from different users
+                left: { marginTop: 7 },    // Space between messages from different users
             }}
         />
     );
@@ -132,18 +105,28 @@ const ChatScreen: React.FC = () => {
             containerStyle={{
                 borderTopWidth: 1,
                 borderTopColor: '#ECECEC',
-                backgroundColor: '#F3F3F3',
-                padding: 5,
+                backgroundColor: '#F5F5F5',
+                paddingVertical: 10,
+                paddingHorizontal: 10,
+                borderRadius: 25,
+                margin: 10,
             }}
             textInputStyle={{
-                color: '#000',
+                color: '#333',
                 fontSize: 16,
             }}
         />
     );
 
     return (
-        <View style={styles.container}>
+        <View style={styles.flexContainer}>
+            <View style={styles.header}>
+                <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('meus-chats')}>
+                    <Ionicons name="arrow-back" size={24} color="#fff" />
+                    <Text style={styles.returnText}>Voltar</Text>
+                </TouchableOpacity>
+            </View>
+
             <GiftedChat
                 messages={messages}
                 onSend={(messages) => onSend(messages)}
@@ -153,17 +136,48 @@ const ChatScreen: React.FC = () => {
                 }}
                 renderBubble={renderBubble}
                 renderInputToolbar={renderInputToolbar}
-                placeholder="Digite sua mensagem..."
+                placeholder="Escreva sua mensagem..."
+                alwaysShowSend
+                showAvatarForEveryMessage={false}
+                scrollToBottom
+                scrollToBottomComponent={() => <Ionicons name="ios-arrow-down" size={24} color="#66CDAA" />}
+                bottomOffset={0}
+                listViewProps={{
+                    contentContainerStyle: { paddingTop: 60 }, // Add extra space at the top of the messages
+                }}
             />
-            {Platform.OS === 'android' && <KeyboardAvoidingView behavior="padding" />}
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
+    flexContainer: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#E8F0F2', // Light background color
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#66CDAA', // Header color
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+    },
+    returnButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    returnText: {
+        marginLeft: 8,
+        fontSize: 18,
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    headerTitle: {
+        flex: 1,
+        textAlign: 'center',
+        fontSize: 20,
+        color: '#fff',
+        fontWeight: 'bold',
     },
 });
 

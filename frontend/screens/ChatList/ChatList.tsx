@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { db, FIREBASE_AUTH } from '@/configuracao/config';
-import { collection, query, where, onSnapshot, addDoc } from 'firebase/firestore';
+import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
+import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, addDoc, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
+import { ref, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 
 interface InterestedUser {
   id: string;
-  userName: string;
+  nomeCompleto: string;
+  nomeUsuario: string;
   userId: string;
   animalId: string;
+  profilePictureUrl: string | null;
 }
 
 const ChatList: React.FC = () => {
@@ -16,59 +19,171 @@ const ChatList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const currentUser = FIREBASE_AUTH.currentUser;
 
+  // Move useNavigation to the top level
+  const navigation = useNavigation();
+
   useEffect(() => {
     if (!currentUser) {
+      console.log('No current user, stopping process.');
       setLoading(false);
       return;
     }
 
-    const interestedUsersRef = collection(db, 'interestedUsers');
-    const q = query(interestedUsersRef, where('animalOwnerId', '==', currentUser.uid));
+    const interestedUsersRef = collection(db, 'adoptionInterests');
+    const q = query(interestedUsersRef, where('ownerId', '==', currentUser.uid));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const interestedUsersFirestore = querySnapshot.docs.map((doc) => {
-        const firebaseData = doc.data();
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      console.log('Snapshot received, number of documents:', querySnapshot.size);
 
-        const data: InterestedUser = {
-          id: doc.id,
-          userName: firebaseData.userName,
-          userId: firebaseData.userId,
-          animalId: firebaseData.animalId
-        };
+      const interestedUsersData: InterestedUser[] = [];
 
-        return data;
-      });
-      setInterestedUsers(interestedUsersFirestore);
+      for (const docSnapshot of querySnapshot.docs) {
+        const firebaseData = docSnapshot.data();
+        const interestedUserId = firebaseData.interestedUserId;
+        const animalId = firebaseData.animalId;
+
+        const userDocRef = firestoreDoc(db, 'usuarios', interestedUserId);
+        const userDocSnapshot = await getDoc(userDocRef);
+
+        if (userDocSnapshot.exists()) {
+          const userData = userDocSnapshot.data();
+
+          // Get profile picture URL from Firebase Storage
+          let profilePictureUrl: string | null = null;
+          try {
+            profilePictureUrl = await getDownloadURL(ref(storage, `images/${interestedUserId}.jpg`));
+          } catch (error) {
+            console.log('No profile picture found for user:', interestedUserId);
+          }
+
+          const data: InterestedUser = {
+            id: docSnapshot.id,
+            nomeCompleto: userData.nomeCompleto || 'Unknown',
+            nomeUsuario: userData.nomeUsuario || 'Unknown',
+            userId: interestedUserId,
+            animalId: animalId,
+            profilePictureUrl: profilePictureUrl,
+          };
+
+          interestedUsersData.push(data);
+        } else {
+          console.error('User document not found in usuarios collection:', interestedUserId);
+        }
+      }
+
+      setInterestedUsers(interestedUsersData);
       setLoading(false);
+    }, (error) => {
+      console.error('Error fetching data from Firestore:', error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+    };
   }, [currentUser]);
 
   const handleStartChat = async (userId: string, animalId: string) => {
-    const navigation = useNavigation();
     const chatId = `${currentUser?.uid}_${userId}_${animalId}`;
-    await addDoc(collection(db, 'chats'), {
-      ownerId: currentUser?.uid,
-      participantIds: [currentUser?.uid, userId],
-      animalId: animalId,
-      createdAt: new Date(),
-    });
-    console.log(`Chat started with ID: ${chatId}`);
-    navigation.navigate('ChatScreen', { chatId });
+    const ownerId = currentUser?.uid;
+    console.log(`Starting chat with ID: ${chatId}`);
+
+    try {
+      // Reference the chat by its chatId
+      const chatDocRef = doc(db, 'chats', chatId);
+
+      // Get the chat document to check if it exists
+      const chatSnapshot = await getDoc(chatDocRef);
+
+      // If the chat already exists, navigate to the chat screen
+      if (chatSnapshot.exists()) {
+        console.log('Chat already exists');
+        navigation.navigate('chat', { chatId, animalId, ownerId });
+        return; // Stop the function here, since the chat already exists
+      }
+
+      // If chat does not exist, create a new chat with the given chatId as the document ID
+      await setDoc(chatDocRef, {
+        ownerId: ownerId,
+        participantIds: [ownerId, userId],
+        animalId: animalId,
+        createdAt: new Date(),
+      });
+
+      console.log(`Chat successfully started with ID: ${chatId}`);
+
+      // Navigate to the chat screen, passing chatId, animalId, and ownerId as params
+      navigation.navigate('chat', { chatId, animalId, ownerId });
+
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    }
   };
 
   const handleAccept = (userId: string) => {
     console.log(`User ${userId} accepted`);
   };
 
-  const handleReject = (userId: string) => {
-    console.log(`User ${userId} rejected`);
-  };
 
-  if (loading) {
-    return <ActivityIndicator />;
-  }
+  const handleReject = async (userId: string, animalId: string) => {
+    // Check if currentUser, userId, and animalId are defined
+    if (!currentUser?.uid) {
+      console.error('Error: currentUser is undefined.');
+      return;
+    }
+    if (!userId) {
+      console.error('Error: userId is undefined.');
+      return;
+    }
+    if (!animalId) {
+      console.error('Error: animalId is undefined.');
+      return;
+    }
+
+    console.log(`User ${userId} rejected`);
+
+    try {
+      // 1. Delete the chat document
+      const chatsRef = collection(db, 'chats');
+      const chatQuery = query(
+          chatsRef,
+          where('ownerId', '==', currentUser.uid),
+          where('participantIds', 'array-contains', userId),
+          where('animalId', '==', animalId)
+      );
+
+      const chatSnapshot = await getDocs(chatQuery);
+
+      if (!chatSnapshot.empty) {
+        const chatDoc = chatSnapshot.docs[0]; // Assuming there's only one chat document
+        await deleteDoc(chatDoc.ref); // Delete the chat document
+        console.log(`Chat with ID: ${chatDoc.id} deleted successfully.`);
+      } else {
+        console.log('No chat found for this user and animal.');
+      }
+
+      // 2. Delete the adoption interest document
+      const adoptionInterestsRef = collection(db, 'adoptionInterests');
+      const interestQuery = query(
+          adoptionInterestsRef,
+          where('ownerId', '==', currentUser.uid),
+          where('interestedUserId', '==', userId),
+          where('animalId', '==', animalId)
+      );
+
+      const interestSnapshot = await getDocs(interestQuery);
+
+      if (!interestSnapshot.empty) {
+        const interestDoc = interestSnapshot.docs[0]; // Assuming only one adoption interest document
+        await deleteDoc(interestDoc.ref); // Delete the adoption interest document
+        console.log(`Adoption interest with ID: ${interestDoc.id} deleted successfully.`);
+      } else {
+        console.log('No adoption interest found for this user and animal.');
+      }
+
+    } catch (error) {
+      console.error('Error deleting chat or adoption interest:', error);
+    }
+  };
 
   return (
       <View style={styles.container}>
@@ -77,16 +192,25 @@ const ChatList: React.FC = () => {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
                 <View style={styles.userContainer}>
-                  <Text>{item.userName}</Text>
+                  <View style={styles.userInfo}>
+                    <Image
+                        source={item.profilePictureUrl ? { uri: item.profilePictureUrl } : { uri: 'https://via.placeholder.com/150' }}
+                        style={styles.profilePicture}
+                    />
+                    <View style={styles.userDetails}>
+                      <Text style={styles.userName}>{item.nomeCompleto}</Text>
+                      <Text style={styles.userUsername}>@{item.nomeUsuario}</Text>
+                    </View>
+                  </View>
                   <View style={styles.buttonsContainer}>
-                    <TouchableOpacity style={styles.button} onPress={() => handleReject(item.userId)}>
-                      <Text>Recusar</Text>
+                    <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId, item.animalId)}>
+                      <Text style={styles.buttonText}>Recusar</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => handleAccept(item.userId)}>
-                      <Text>Aceitar</Text>
+                    <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleAccept(item.userId)}>
+                      <Text style={styles.buttonText}>Aceitar</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => handleStartChat(item.userId, item.animalId)}>
-                      <Text>Começar Chat</Text>
+                    <TouchableOpacity style={[styles.button, styles.chatButton]} onPress={() => handleStartChat(item.userId, item.animalId)}>
+                      <Text style={styles.buttonText}>Chat</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -99,23 +223,78 @@ const ChatList: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f5f5f5',
     padding: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
   userContainer: {
-    marginBottom: 16,
-    padding: 16,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
+    padding: 16,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  profilePicture: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 16,
+  },
+  userDetails: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  userUsername: {
+    fontSize: 14,
+    color: '#777',
   },
   buttonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    justifyContent: 'space-around',
+    marginTop: 10,
   },
   button: {
-    padding: 8,
-    backgroundColor: '#ccc',
-    borderRadius: 4,
+    flex: 1,
+    paddingVertical: 10,
+    marginHorizontal: 5,
+    borderRadius: 8,
+  },
+  rejectButton: {
+    backgroundColor: '#ff6b6b',
+  },
+  acceptButton: {
+    backgroundColor: '#4caf50',
+  },
+  chatButton: {
+    backgroundColor: '#88c9bf',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 
