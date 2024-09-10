@@ -103,6 +103,9 @@ export default function UserProfile() {
         }
     }, []);
 
+    // Filter out pets from the "Pets para Adoção" list that are also in the "Adopted Pets" list
+    const availablePets = pets.filter(pet => !adoptedPets.some(adoptedPet => adoptedPet.id === pet.id));
+
     if (loading) {
         console.log('Loading user data...');
         return (
@@ -159,7 +162,7 @@ export default function UserProfile() {
             <View style={styles.petsContainer}>
                 <Text style={styles.petsTitle}>Pets para Adoção:</Text>
                 <FlatList
-                    data={pets}
+                    data={availablePets}
                     renderItem={renderPet}
                     keyExtractor={(item) => item.id}
                     horizontal // Display pets in a horizontal scroll

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapshot } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, startAfter, limit, DocumentSnapshot, where } from 'firebase/firestore';
 import { getDownloadURL, ref } from 'firebase/storage';
 import { db, storage } from '@/configuracao/config';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -34,11 +34,32 @@ const AdotarFeed = () => {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [likedPets, setLikedPets] = useState<{ [key: string]: boolean }>({});
+  const [concludedAnimalIds, setConcludedAnimalIds] = useState<Set<string>>(new Set());
 
   const navigation = useNavigation();
 
   const callCount = useRef(0);
   const callCountTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch animals with "Concluído" status and store their IDs in a set
+  const fetchConcludedAnimals = useCallback(async () => {
+    try {
+      const adoptionQuery = query(collection(db, 'adoptionProcess'), where('situacao', '==', 'Concluído'));
+      const querySnapshot = await getDocs(adoptionQuery);
+
+      const concludedIds = new Set<string>();
+      querySnapshot.forEach((doc) => {
+        const processData = doc.data();
+        if (processData.animalId) {
+          concludedIds.add(processData.animalId);
+        }
+      });
+
+      setConcludedAnimalIds(concludedIds);
+    } catch (error) {
+      console.error('Error fetching concluded animals:', error);
+    }
+  }, []);
 
   const fetchPets = useCallback(async (isRefresh: boolean = false) => {
     if (loading || callCount.current >= 3) return;
@@ -65,12 +86,15 @@ const AdotarFeed = () => {
         for (const docSnapshot of querySnapshot.docs) {
           const petData = docSnapshot.data();
 
-          try {
-            console.log("nome : " + petData.nome)
-            const imageUrl = await getDownloadURL(ref(storage, `images/${petData.nome}.jpg`));
-            newPets.push({ ...petData, id: docSnapshot.id, imageUrl } as Animal);
-          } catch (imageError) {
-            console.error('Error fetching image for:', petData.nome, imageError);
+          // Exclude pets whose IDs are in the concludedAnimalIds set
+          if (!concludedAnimalIds.has(docSnapshot.id)) {
+            try {
+              console.log("nome : " + petData.nome)
+              const imageUrl = await getDownloadURL(ref(storage, `images/${petData.nome}.jpg`));
+              newPets.push({ ...petData, id: docSnapshot.id, imageUrl } as Animal);
+            } catch (imageError) {
+              console.error('Error fetching image for:', petData.nome, imageError);
+            }
           }
         }
         setPets(isRefresh ? newPets : [...pets, ...newPets]);
@@ -84,16 +108,17 @@ const AdotarFeed = () => {
       setLoading(false);
       if (isRefresh) setRefreshing(false);
     }
-  }, [lastVisible, loading]);
+  }, [lastVisible, loading, concludedAnimalIds]);
 
   useFocusEffect(
       useCallback(() => {
         const fetchInitialPets = async () => {
           setLastVisible(null);
+          await fetchConcludedAnimals(); // Fetch concluded animals before fetching pets
           await fetchPets(true);
         };
         fetchInitialPets();
-      }, [fetchPets])
+      }, [fetchPets, fetchConcludedAnimals])
   );
 
   const handleHeartPress = (id: string) => {
