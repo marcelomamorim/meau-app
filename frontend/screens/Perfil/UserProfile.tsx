@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, ActivityIndicator, FlatList } from 'react-native';
 import { FIREBASE_AUTH, db } from '../../configuracao/config'; // Ensure db (Firestore) is imported
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore'; // Firestore methods
+import { getDoc, collection, query, where, getDocs, doc as firestoreDoc } from 'firebase/firestore'; // Firestore methods
 
 export default function UserProfile() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [profilePictureUrl, setProfilePictureUrl] = useState(null);
     const [pets, setPets] = useState([]); // State to store the list of pets
+    const [adoptedPets, setAdoptedPets] = useState([]); // State to store the list of pets with "Concluído" status
 
     useEffect(() => {
         const currentUser = FIREBASE_AUTH.currentUser;
@@ -16,7 +17,7 @@ export default function UserProfile() {
         if (currentUser) {
             console.log('Fetching user document from Firestore...');
             // Get user document from 'usuarios' collection using the user ID
-            const userDocRef = doc(db, 'usuarios', currentUser.uid);
+            const userDocRef = firestoreDoc(db, 'usuarios', currentUser.uid);
 
             getDoc(userDocRef)
                 .then((docSnap) => {
@@ -64,6 +65,37 @@ export default function UserProfile() {
                 })
                 .catch((error) => {
                     console.error('Error fetching pets:', error);
+                });
+
+            // Fetch the list of pets in the "adoptionProcess" collection with status "Concluído"
+            const adoptedPetsQuery = query(collection(db, 'adoptionProcess'), where('situacao', '==', 'Concluído'));
+            getDocs(adoptedPetsQuery)
+                .then((querySnapshot) => {
+                    const adoptedPetsList = [];
+                    querySnapshot.forEach((doc) => {
+                        const processData = doc.data();
+                        // Fetch pet data from 'animais' collection using the animalId from adoptionProcess
+                        const animalDocRef = firestoreDoc(db, 'animais', processData.animalId);
+                        getDoc(animalDocRef)
+                            .then((animalDoc) => {
+                                if (animalDoc.exists()) {
+                                    const animalData = animalDoc.data();
+                                    adoptedPetsList.push({
+                                        id: animalDoc.id,
+                                        name: animalData.nome,
+                                        imageUrl: animalData.imageUrl,
+                                    });
+                                    setAdoptedPets([...adoptedPetsList]);
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('Error fetching animal data:', error);
+                            });
+                    });
+                    console.log('Adopted Pets data:', adoptedPetsList); // Log the fetched pets with status "Concluído"
+                })
+                .catch((error) => {
+                    console.error('Error fetching adopted pets:', error);
                 });
         } else {
             console.log('No user logged in.');
@@ -128,6 +160,19 @@ export default function UserProfile() {
                 <Text style={styles.petsTitle}>Pets para Adoção:</Text>
                 <FlatList
                     data={pets}
+                    renderItem={renderPet}
+                    keyExtractor={(item) => item.id}
+                    horizontal // Display pets in a horizontal scroll
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.petsList}
+                />
+            </View>
+
+            {/* List of Pets with status "Concluído" */}
+            <View style={styles.petsContainer}>
+                <Text style={styles.petsTitle}>Pets Adotados (Concluído):</Text>
+                <FlatList
+                    data={adoptedPets}
                     renderItem={renderPet}
                     keyExtractor={(item) => item.id}
                     horizontal // Display pets in a horizontal scroll
@@ -232,4 +277,3 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
 });
-

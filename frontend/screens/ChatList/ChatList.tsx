@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, FlatList, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { db, FIREBASE_AUTH, storage } from '@/configuracao/config';
-import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, setDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDoc, doc as firestoreDoc, setDoc, getDocs, deleteDoc, addDoc } from 'firebase/firestore';
 import { ref, getDownloadURL } from 'firebase/storage';
 import { useNavigation } from '@react-navigation/native';
 
@@ -27,23 +27,28 @@ interface Chat {
   participantIds: string[];
   ownerId: string;
   ownerInfo: InterestedUser | null;
-  animalName: string | null; // Store the animal's name
+  animalName: string | null;
 }
 
 const ChatList: React.FC = () => {
   const [interestedUsers, setInterestedUsers] = useState<InterestedUser[]>([]);
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const currentUser = FIREBASE_AUTH.currentUser;
 
   const navigation = useNavigation();
 
   useEffect(() => {
+    console.log('Component mounted. Checking if user is logged in.');
+    
     if (!currentUser) {
       console.log('No current user, stopping process.');
       setLoading(false);
       return;
     }
+
+    console.log('Fetching adoption interests for user:', currentUser.uid);
 
     // First query for adoptionInterests
     const interestedUsersRef = collection(db, 'adoptionInterests');
@@ -51,6 +56,8 @@ const ChatList: React.FC = () => {
 
     const unsubscribeAdoptionInterests = onSnapshot(q1, async (querySnapshot) => {
       const interestedUsersData: InterestedUser[] = [];
+
+      console.log('Received snapshot for adoptionInterests:', querySnapshot.size, 'documents');
 
       for (const docSnapshot of querySnapshot.docs) {
         const firebaseData = docSnapshot.data();
@@ -68,6 +75,7 @@ const ChatList: React.FC = () => {
 
         if (userDocSnapshot.exists()) {
           const userData = userDocSnapshot.data();
+          console.log('User data found for interestedUserId:', interestedUserId);
 
           let profilePictureUrl: string | null = null;
           try {
@@ -86,6 +94,7 @@ const ChatList: React.FC = () => {
             const animalData = animalDocSnapshot.data() as Animal;
             animalName = animalData.nome || 'Desconhecido';
             animalEmoji = animalData.especie === 'Cachorro' ? '🐶' : animalData.especie === 'Gato' ? '🐱' : '❓';
+            console.log('Animal data fetched for animalId:', animalId);
           }
 
           const data: InterestedUser = {
@@ -105,10 +114,13 @@ const ChatList: React.FC = () => {
         }
       }
 
+      console.log('Setting interestedUsers state with data:', interestedUsersData);
       setInterestedUsers(interestedUsersData);
     }, (error) => {
       console.error('Error fetching adoptionInterests:', error);
     });
+
+    console.log('Fetching chats where currentUser is part of participantIds');
 
     // Second query for chats where currentUser is part of participantIds
     const chatsRef = collection(db, 'chats');
@@ -116,6 +128,8 @@ const ChatList: React.FC = () => {
 
     const unsubscribeChats = onSnapshot(q2, async (querySnapshot) => {
       const chatsData: Chat[] = [];
+
+      console.log('Received snapshot for chats:', querySnapshot.size, 'documents');
 
       for (const chatDoc of querySnapshot.docs) {
         const chatData = chatDoc.data();
@@ -127,7 +141,6 @@ const ChatList: React.FC = () => {
           continue;
         }
 
-        // Fetch owner details similar to interestedUser
         const ownerDocRef = firestoreDoc(db, 'usuarios', ownerId);
         const ownerDocSnapshot = await getDoc(ownerDocRef);
 
@@ -136,6 +149,7 @@ const ChatList: React.FC = () => {
 
         if (ownerDocSnapshot.exists()) {
           const ownerData = ownerDocSnapshot.data();
+          console.log('Owner data found for ownerId:', ownerId);
 
           let profilePictureUrl: string | null = null;
           try {
@@ -155,13 +169,13 @@ const ChatList: React.FC = () => {
             animalEmoji: null,
           };
 
-          // Fetch the animal name
           const animalDocRef = firestoreDoc(db, 'animais', chatData.animalId);
           const animalDocSnapshot = await getDoc(animalDocRef);
 
           if (animalDocSnapshot.exists()) {
             const animalData = animalDocSnapshot.data() as Animal;
             animalName = animalData.nome || 'Desconhecido';
+            console.log('Animal data fetched for chat:', chatData.animalId);
           }
         }
 
@@ -171,10 +185,11 @@ const ChatList: React.FC = () => {
           participantIds: chatData.participantIds,
           ownerId: ownerId,
           ownerInfo: ownerInfo,
-          animalName: animalName, // Store the animal name
+          animalName: animalName,
         });
       }
 
+      console.log('Setting chats state with data:', chatsData);
       setChats(chatsData);
       setLoading(false);
     }, (error) => {
@@ -182,6 +197,7 @@ const ChatList: React.FC = () => {
     });
 
     return () => {
+      console.log('Cleaning up onSnapshot listeners.');
       unsubscribeAdoptionInterests();
       unsubscribeChats();
     };
@@ -190,12 +206,14 @@ const ChatList: React.FC = () => {
   const handleStartChat = async (userId: string, animalId: string) => {
     const chatId = `${currentUser?.uid}_${userId}_${animalId}`;
     const ownerId = currentUser?.uid;
+    console.log('Starting chat with ID:', chatId);
 
     try {
-      const chatDocRef = doc(db, 'chats', chatId);
+      const chatDocRef = firestoreDoc(db, 'chats', chatId);
       const chatSnapshot = await getDoc(chatDocRef);
 
       if (chatSnapshot.exists()) {
+        console.log('Chat already exists. Navigating to chat screen.');
         navigation.navigate('chat', { chatId, animalId, ownerId });
         return;
       }
@@ -207,6 +225,7 @@ const ChatList: React.FC = () => {
         createdAt: new Date(),
       });
 
+      console.log('Chat successfully created. Navigating to chat screen.');
       navigation.navigate('chat', { chatId, animalId, ownerId });
     } catch (error) {
       console.error('Error starting chat:', error);
@@ -214,24 +233,14 @@ const ChatList: React.FC = () => {
   };
 
   const handleReject = async (userId: string, animalId: string) => {
-    // Check if currentUser, userId, and animalId are defined
-    if (!currentUser?.uid) {
-      console.error('Error: currentUser is undefined.');
+    console.log(`Rejecting user ${userId} for animal ${animalId}`);
+
+    if (!currentUser?.uid || !userId || !animalId) {
+      console.log('Invalid parameters for rejection.');
       return;
     }
-    if (!userId) {
-      console.error('Error: userId is undefined.');
-      return;
-    }
-    if (!animalId) {
-      console.error('Error: animalId is undefined.');
-      return;
-    }
-  
-    console.log(`User ${userId} rejected`);
-  
+
     try {
-      // 1. Delete the chat document
       const chatsRef = collection(db, 'chats');
       const chatQuery = query(
         chatsRef,
@@ -239,18 +248,17 @@ const ChatList: React.FC = () => {
         where('participantIds', 'array-contains', userId),
         where('animalId', '==', animalId)
       );
-  
+
       const chatSnapshot = await getDocs(chatQuery);
-  
+
       if (!chatSnapshot.empty) {
-        const chatDoc = chatSnapshot.docs[0]; // Assuming there's only one chat document
-        await deleteDoc(chatDoc.ref); // Delete the chat document
+        const chatDoc = chatSnapshot.docs[0];
+        await deleteDoc(chatDoc.ref);
         console.log(`Chat with ID: ${chatDoc.id} deleted successfully.`);
       } else {
         console.log('No chat found for this user and animal.');
       }
-  
-      // 2. Delete the adoption interest document
+
       const adoptionInterestsRef = collection(db, 'adoptionInterests');
       const interestQuery = query(
         adoptionInterestsRef,
@@ -258,19 +266,48 @@ const ChatList: React.FC = () => {
         where('interestedUserId', '==', userId),
         where('animalId', '==', animalId)
       );
-  
+
       const interestSnapshot = await getDocs(interestQuery);
-  
+
       if (!interestSnapshot.empty) {
-        const interestDoc = interestSnapshot.docs[0]; // Assuming only one adoption interest document
-        await deleteDoc(interestDoc.ref); // Delete the adoption interest document
+        const interestDoc = interestSnapshot.docs[0];
+        await deleteDoc(interestDoc.ref);
         console.log(`Adoption interest with ID: ${interestDoc.id} deleted successfully.`);
       } else {
         console.log('No adoption interest found for this user and animal.');
       }
-  
+
     } catch (error) {
       console.error('Error deleting chat or adoption interest:', error);
+    }
+  };
+
+  const handleFinishProcess = async (userId: string, animalId: string) => {
+    console.log('Finishing adoption process for user:', userId, 'and animal:', animalId);
+
+    try {
+      // Add a new document to the adoptionProcess collection
+      const adoptionProcessRef = collection(db, 'adoptionProcess');
+      await addDoc(adoptionProcessRef, {
+        animalId: animalId,
+        ownerId: currentUser?.uid,
+        situacao: 'Concluído',
+        createdAt: new Date(),
+      });
+
+      console.log('Adoption process successfully registered.');
+
+      // Set the success message
+      setSuccessMessage('Processo de adoção concluído com sucesso!');
+
+      // After a delay (optional), clear the success message and call handleReject
+      setTimeout(() => {
+        setSuccessMessage(null);
+        handleReject(userId, animalId);
+      }, 5000); // Delay of 5 seconds
+
+    } catch (error) {
+      console.error('Error finishing adoption process:', error);
     }
   };
 
@@ -295,7 +332,7 @@ const ChatList: React.FC = () => {
         <TouchableOpacity style={[styles.button, styles.rejectButton]} onPress={() => handleReject(item.userId, item.animalId)}>
           <Text style={styles.buttonText}>Recusar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.acceptButton]}>
+        <TouchableOpacity style={[styles.button, styles.acceptButton]} onPress={() => handleFinishProcess(item.userId, item.animalId)}>
           <Text style={styles.buttonText}>Aceitar</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.button, styles.chatButton]} onPress={() => handleStartChat(item.userId, item.animalId)}>
@@ -335,6 +372,11 @@ const ChatList: React.FC = () => {
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <>
+          {successMessage && (
+            <View style={styles.successMessageContainer}>
+              <Text style={styles.successMessage}>{successMessage}</Text>
+            </View>
+          )}
           <Text style={styles.sectionHeader}>Interesses de adoção</Text>
           <FlatList
             data={interestedUsers}
@@ -421,6 +463,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    textAlign: 'center',
+  },
+  successMessageContainer: {
+    backgroundColor: '#4caf50',
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 16,
+  },
+  successMessage: {
+    color: '#fff',
+    fontSize: 18,
     textAlign: 'center',
   },
 });
