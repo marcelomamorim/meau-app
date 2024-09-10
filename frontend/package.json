@@ -1,28 +1,31 @@
 {
-  "name": "frontend",
+  "name": "meau-app",
   "version": "1.0.0",
+  "android": {
+    "package": "com.meau.app",
+    "googleServicesFile": "./google-services.json"
+  },
   "scripts": {
-    "start": "expo start --dev-client",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "build:ios": "expo build:ios --non-interactive",
-    "build:android": "expo build:android --non-interactive",
+    "start": "node config.js && expo start",
+    "android": "node config.js && expo run:android",
+    "ios": "node config.js && expo run:ios",
+    "web": "node config.js && expo start --web",
+    "build:ios": "node config.js && expo build:ios --non-interactive",
+    "build:android": "node config.js && expo build:android --non-interactive",
     "test": "jest",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
-  "jest": {
-    "preset": "jest-expo"
-  },
   "dependencies": {
+    "@expo-google-fonts/roboto": "^0.2.3",
     "@expo/config-plugins": "~8.0.0",
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-picker/picker": "2.7.5",
     "@react-navigation/drawer": "^6.6.15",
-    "@react-navigation/native": "^6.1.17",
+    "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.9.26",
+    "@react-navigation/stack": "^6.4.1",
     "ajv": "^6.12.6",
     "ajv-keywords": "^3.5.2",
     "axios": "^1.6.8",
@@ -31,6 +34,7 @@
     "expo-font": "~12.0.9",
     "expo-image-picker": "~15.0.7",
     "expo-linking": "~6.3.1",
+    "expo-notifications": "~0.28.16",
     "expo-router": "~3.5.20",
     "expo-splash-screen": "~0.27.5",
     "expo-status-bar": "~1.12.1",
@@ -41,15 +45,13 @@
     "react-dom": "18.2.0",
     "react-native": "0.74.3",
     "react-native-dotenv": "^3.4.11",
-    "react-native-emoji-picker": "^0.2.2",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-gifted-chat": "^2.4.0",
     "react-native-paper": "^5.12.3",
     "react-native-reanimated": "~3.10.1",
-    "react-native-safe-area-context": "4.10.5",
-    "react-native-screens": "3.31.1",
-    "react-native-web": "~0.19.10",
-    "uuid": "^10.0.0"
+    "react-native-safe-area-context": "^4.10.8",
+    "react-native-screens": "^3.34.0",
+    "react-native-web": "~0.19.10"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0",
@@ -70,14 +72,12 @@
     "react-test-renderer": "^18.2.0",
     "typescript": "~5.3.3"
   },
+  "jest": {
+    "preset": "jest-expo"
+  },
   "resolutions": {
     "react": "18.2.0",
     "react-test-renderer": "18.2.0"
-  },
-  "extra": {
-    "eas": {
-      "projectId": "84085e6e-5d24-4c65-9424-c16f10f39f66"
-    }
   },
   "private": true
 }

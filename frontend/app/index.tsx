@@ -31,7 +31,7 @@ async function configureNotificationChannel() {
             importance: Notifications.AndroidImportance.MAX,
             sound: true, // Ativar som
             vibrationPattern: [0, 250, 250, 250], // Padrão de vibração
-            lightColor: '#FF231F7C', // Cor da luz de notificação
+            lightColor: '#FF231F4C', // Cor da luz de notificação
         });
     }
 }

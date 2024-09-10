@@ -29,7 +29,7 @@ export async function sendAdoptionNotification(animalId: string, interestedUserI
             to: ownerToken,
             sound: 'default',
             title: 'Novo pedido de adoção!',
-            body: `${interestedUserName} quer adotar o ${animalName}`,
+            body: `${interestedUserName} se interessou pelo seu animal}`,
             data: { animalId, interestedUserId }
         };
 

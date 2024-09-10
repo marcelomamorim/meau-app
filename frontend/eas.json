@@ -5,14 +5,38 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "API_KEY": "AIzaSyDPN0XjpVwZOspBUQ445B0rj02qWfYtRGI",
+        "AUTH_DOMAIN": "unb-project-meau-app.firebaseapp.com",
+        "PROJECT_ID": "unb-project-meau-app",
+        "STORAGE_BUCKET": "unb-project-meau-app.appspot.com",
+        "MESSAGING_SENDER_ID": "700596428693",
+        "APP_ID": "1:700596428693:web:ea4b88dab2938690ebe09c"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "API_KEY": "AIzaSyDPN0XjpVwZOspBUQ445B0rj02qWfYtRGI",
+        "AUTH_DOMAIN": "unb-project-meau-app.firebaseapp.com",
+        "PROJECT_ID": "unb-project-meau-app",
+        "STORAGE_BUCKET": "unb-project-meau-app.appspot.com",
+        "MESSAGING_SENDER_ID": "700596428693",
+        "APP_ID": "1:700596428693:web:ea4b88dab2938690ebe09c"
+      }
     },
     "production": {
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "API_KEY": "AIzaSyDPN0XjpVwZOspBUQ445B0rj02qWfYtRGI",
+        "AUTH_DOMAIN": "unb-project-meau-app.firebaseapp.com",
+        "PROJECT_ID": "unb-project-meau-app",
+        "STORAGE_BUCKET": "unb-project-meau-app.appspot.com",
+        "MESSAGING_SENDER_ID": "700596428693",
+        "APP_ID": "1:700596428693:web:ea4b88dab2938690ebe09c"
       }
     }
   },
